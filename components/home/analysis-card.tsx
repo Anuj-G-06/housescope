@@ -21,9 +21,12 @@ export function AnalysisCard({ analysis, onSelect, onDelete }: AnalysisCardProps
   const riskColor = getRiskColor(result.risk_score);
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onSelect}
-      className="relative w-full rounded-xl overflow-hidden text-left group"
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect(); }}
+      className="relative w-full rounded-xl overflow-hidden text-left group cursor-pointer"
       style={{ boxShadow: "0 2px 8px rgba(120,100,80,0.08), 0 8px 32px rgba(120,100,80,0.06)" }}
     >
       <div className="relative aspect-video bg-black">
@@ -62,6 +65,6 @@ export function AnalysisCard({ analysis, onSelect, onDelete }: AnalysisCardProps
           </div>
         </div>
       </div>
-    </button>
+    </div>
   );
 }
