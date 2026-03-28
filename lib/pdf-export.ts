@@ -80,3 +80,64 @@ export function exportReportPDF(result: AnalysisResult, address: string) {
 
   doc.save(`HomeScope-Report-${Date.now()}.pdf`);
 }
+
+export function exportDamageTablePDF(result: AnalysisResult, address: string) {
+  const doc = new jsPDF();
+  let y = 20;
+
+  doc.setFontSize(18);
+  doc.text("Damage Report", 20, y);
+  y += 8;
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.text(address, 20, y);
+  y += 4;
+  doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, y);
+  y += 10;
+
+  // Table header
+  doc.setTextColor(0);
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.text("Severity", 20, y);
+  doc.text("Issue", 50, y);
+  doc.text("Category", 115, y);
+  doc.text("Cost Range", 155, y);
+  y += 2;
+  doc.setDrawColor(200);
+  doc.line(20, y, 190, y);
+  y += 5;
+
+  // Table rows
+  doc.setFont("helvetica", "normal");
+  for (const entry of result.manifest) {
+    if (y > 270) {
+      doc.addPage();
+      y = 20;
+    }
+    doc.text(entry.severity.toUpperCase(), 20, y);
+    const label = doc.splitTextToSize(entry.label, 60);
+    doc.text(label, 50, y);
+    doc.text(CATEGORY_LABELS[entry.category], 115, y);
+    doc.text(`$${entry.repair_cost_low.toLocaleString()}–$${entry.repair_cost_high.toLocaleString()}`, 155, y);
+    y += Math.max(label.length * 4.5, 6);
+  }
+
+  // Total
+  y += 4;
+  doc.line(20, y, 190, y);
+  y += 6;
+  doc.setFont("helvetica", "bold");
+  doc.text("TOTAL ESTIMATED RANGE", 20, y);
+  doc.text(`$${result.total_cost_low.toLocaleString()} – $${result.total_cost_high.toLocaleString()}`, 155, y);
+
+  // Disclaimer
+  y += 15;
+  if (y > 270) { doc.addPage(); y = 20; }
+  doc.setFontSize(7);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(120);
+  doc.text("DISCLAIMER: AI-assisted triage report. Not a licensed home inspection.", 20, y, { maxWidth: 170 });
+
+  doc.save(`HomeScope-Damage-Report.pdf`);
+}

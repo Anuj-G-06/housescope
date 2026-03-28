@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import jsPDF from "jspdf";
 import type { AnalysisResult } from "@/lib/types";
 
 interface NegotiationBriefProps {
@@ -32,6 +33,22 @@ Best regards,
   const [letter, setLetter] = useState(defaultLetter);
   const [showLetter, setShowLetter] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+
+    const lines = doc.splitTextToSize(letter, 170);
+    let y = 20;
+    for (const line of lines) {
+      if (y > 275) { doc.addPage(); y = 20; }
+      doc.text(line, 20, y);
+      y += 5.5;
+    }
+
+    doc.save(`HomeScope-Negotiation-Letter.pdf`);
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(letter);
@@ -65,6 +82,12 @@ Best regards,
               className="bg-[var(--color-primary)] text-white rounded-xl px-5 py-2.5 hover:bg-[var(--color-primary-dark)] transition-colors font-medium text-sm"
             >
               {copied ? "Copied!" : "Copy to Clipboard"}
+            </button>
+            <button
+              onClick={handleDownloadPDF}
+              className="bg-[var(--color-primary)] text-white rounded-xl px-5 py-2.5 hover:bg-[var(--color-primary-dark)] transition-colors font-medium text-sm"
+            >
+              Download Letter PDF
             </button>
           </div>
         </>

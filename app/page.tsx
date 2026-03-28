@@ -13,7 +13,7 @@ import { RiskScore } from "@/components/report/risk-score";
 import { FindingsReport } from "@/components/report/findings-report";
 import { CostBreakdown } from "@/components/report/cost-breakdown";
 import { NegotiationBrief } from "@/components/report/negotiation-brief";
-import { exportReportPDF } from "@/lib/pdf-export";
+import { exportReportPDF, exportDamageTablePDF } from "@/lib/pdf-export";
 import { BATCH_SIZE } from "@/lib/constants";
 import type { AppStage, FrameData, Finding, AnalysisResult } from "@/lib/types";
 
@@ -67,6 +67,7 @@ export default function Home() {
       batches.push(frames.slice(i, i + BATCH_SIZE));
     }
 
+    let findingCounter = 0;
     for (let i = 0; i < batches.length; i++) {
       const batch = batches[i];
       try {
@@ -76,11 +77,35 @@ export default function Home() {
           body: JSON.stringify({ frames: batch, address }),
         });
         if (!res.ok) {
-          console.error(`Batch ${i} failed with status ${res.status}`);
+          // Rate limited — wait and retry once
+          if (res.status === 500 && i > 0) {
+            setStatusText("Rate limited — waiting to retry...");
+            await new Promise((r) => setTimeout(r, 15000));
+            const retry = await fetch("/api/analyze-batch", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ frames: batch, address }),
+            });
+            if (retry.ok) {
+              const data = await retry.json();
+              const uniqueFindings = data.findings.map((f: Finding) => ({
+                ...f,
+                id: `${f.id}-${findingCounter++}`,
+              }));
+              allFindings.push(...uniqueFindings);
+              setLiveFindings([...allFindings]);
+              setStatusText("Analyzing frames with AI vision...");
+            }
+          }
           continue;
         }
         const data = await res.json();
-        allFindings.push(...data.findings);
+        // Ensure unique IDs across batches
+        const uniqueFindings = data.findings.map((f: Finding) => ({
+          ...f,
+          id: `${f.id}-${findingCounter++}`,
+        }));
+        allFindings.push(...uniqueFindings);
         setLiveFindings([...allFindings]);
       } catch (err) {
         console.error(`Batch ${i} error:`, err);
@@ -106,7 +131,7 @@ export default function Home() {
       e.preventDefault();
       setIsDragging(false);
       const file = e.dataTransfer.files[0];
-      if (file && (file.type === "video/mp4" || file.type === "video/quicktime")) {
+      if (file && (file.type === "video/mp4" || file.type === "video/quicktime" || file.type === "video/webm")) {
         setVideoFile(file);
       }
     },
@@ -220,7 +245,7 @@ export default function Home() {
               <input
                 id="video-input"
                 type="file"
-                accept="video/mp4,video/quicktime"
+                accept="video/mp4,video/quicktime,video/webm"
                 className="hidden"
                 onChange={handleFileInput}
               />
@@ -297,6 +322,12 @@ export default function Home() {
               onClick={() => exportReportPDF(analysisResult, address)}
             >
               Export PDF Report
+            </button>
+            <button
+              className="bg-white border border-[var(--color-border)] rounded-xl px-5 py-2.5 text-sm font-medium hover:bg-[var(--color-primary-bg)] transition-colors text-[var(--color-text-primary)]"
+              onClick={() => exportDamageTablePDF(analysisResult, address)}
+            >
+              Download Damage Report
             </button>
             {videoUrl && (
               <button
