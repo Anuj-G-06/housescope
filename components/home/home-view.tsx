@@ -1,6 +1,6 @@
 "use client";
 
-import { ScanLine } from "lucide-react";
+import { ScanLine, Home } from "lucide-react";
 import { AnalysisCard } from "./analysis-card";
 import type { SavedAnalysis } from "@/lib/types";
 
@@ -16,7 +16,7 @@ export function HomeView({ analyses, onSelectAnalysis, onDeleteAnalysis, onStart
     <div className="px-4 pt-6 pb-20">
       <div className="flex items-center gap-3 mb-6">
         <div className="h-8 w-8 rounded-lg bg-[var(--color-primary)] flex items-center justify-center">
-          <span className="text-white text-sm font-bold">H</span>
+          <Home size={16} className="text-white" strokeWidth={2.5} />
         </div>
         <div>
           <h1 className="text-xl font-bold text-[var(--color-text-primary)]">HomeScope</h1>
