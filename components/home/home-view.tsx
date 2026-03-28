@@ -19,7 +19,7 @@ export function HomeView({ analyses, onSelectAnalysis, onDeleteAnalysis, onStart
           <Home size={16} className="text-white" strokeWidth={2.5} />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-[var(--color-text-primary)]">HomeScope</h1>
+          <h1 className="text-xl font-bold text-[var(--color-text-primary)]">HouseScope</h1>
           <p className="text-xs text-[var(--color-text-muted)]">Your Properties</p>
         </div>
       </div>

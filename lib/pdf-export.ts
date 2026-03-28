@@ -8,7 +8,7 @@ export function exportReportPDF(result: AnalysisResult, address: string) {
 
   // Header
   doc.setFontSize(22);
-  doc.text("HomeScope Inspection Report", 20, y);
+  doc.text("HouseScope Inspection Report", 20, y);
   y += 10;
   doc.setFontSize(11);
   doc.setTextColor(100);
@@ -78,7 +78,7 @@ export function exportReportPDF(result: AnalysisResult, address: string) {
     { maxWidth: 170 }
   );
 
-  doc.save(`HomeScope-Report-${Date.now()}.pdf`);
+  doc.save(`HouseScope-Report-${Date.now()}.pdf`);
 }
 
 export function exportDamageTablePDF(result: AnalysisResult, address: string) {
@@ -139,5 +139,5 @@ export function exportDamageTablePDF(result: AnalysisResult, address: string) {
   doc.setTextColor(120);
   doc.text("DISCLAIMER: AI-assisted triage report. Not a licensed home inspection.", 20, y, { maxWidth: 170 });
 
-  doc.save(`HomeScope-Damage-Report.pdf`);
+  doc.save(`HouseScope-Damage-Report.pdf`);
 }

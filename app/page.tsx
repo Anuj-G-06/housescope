@@ -390,7 +390,7 @@ export default function HomePage() {
               <div className="h-7 w-7 rounded-lg bg-[var(--color-primary)] flex items-center justify-center">
                 <Home size={14} className="text-white" strokeWidth={2.5} />
               </div>
-              <span className="text-[var(--color-text-primary)] font-bold tracking-tight text-lg">HomeScope</span>
+              <span className="text-[var(--color-text-primary)] font-bold tracking-tight text-lg">HouseScope</span>
             </motion.div>
 
             <motion.h1
@@ -541,7 +541,7 @@ export default function HomePage() {
           <h1 className="text-xl font-bold text-[var(--color-text-primary)] mb-6">Settings</h1>
           <div className="space-y-3">
             <div className="bg-white border border-[var(--color-border)] rounded-xl p-4">
-              <p className="text-sm font-medium text-[var(--color-text-primary)]">About HomeScope</p>
+              <p className="text-sm font-medium text-[var(--color-text-primary)]">About HouseScope</p>
               <p className="text-xs text-[var(--color-text-muted)] mt-1">AI-powered home inspection triage</p>
             </div>
             <div className="bg-white border border-[var(--color-border)] rounded-xl p-4">

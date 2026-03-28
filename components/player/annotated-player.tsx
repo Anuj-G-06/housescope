@@ -34,7 +34,7 @@ export function AnnotatedPlayer({ videoSrc, manifest }: AnnotatedPlayerProps) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "HomeScope-Annotated-Video.webm";
+      a.download = "HouseScope-Annotated-Video.webm";
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {

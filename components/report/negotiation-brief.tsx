@@ -47,7 +47,7 @@ Best regards,
       y += 5.5;
     }
 
-    doc.save(`HomeScope-Negotiation-Letter.pdf`);
+    doc.save(`HouseScope-Negotiation-Letter.pdf`);
   };
 
   const handleCopy = () => {

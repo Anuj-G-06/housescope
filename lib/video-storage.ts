@@ -1,4 +1,4 @@
-const DB_NAME = "homescope";
+const DB_NAME = "housescope";
 const DB_VERSION = 1;
 const STORE_NAME = "videos";
 

@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No video file" }, { status: 400 });
   }
 
-  const blob = await put(`homescope/${Date.now()}-${file.name}`, file, {
+  const blob = await put(`housescope/${Date.now()}-${file.name}`, file, {
     access: "public",
   });
 

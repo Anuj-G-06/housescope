@@ -1,6 +1,6 @@
 import type { SavedAnalysis } from "./types";
 
-const STORAGE_KEY = "homescope:analyses";
+const STORAGE_KEY = "housescope:analyses";
 const MAX_ANALYSES = 20;
 
 export function getSavedAnalyses(): SavedAnalysis[] {

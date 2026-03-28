@@ -10,12 +10,12 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "HomeScope — AI Home Inspection",
+  title: "HouseScope — AI Home Inspection",
   description: "Upload a walkthrough video. Get an annotated inspection report in 45 seconds.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "HomeScope",
+    title: "HouseScope",
   },
 };
 
