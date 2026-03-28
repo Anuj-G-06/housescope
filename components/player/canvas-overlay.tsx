@@ -60,10 +60,11 @@ export function CanvasOverlay({ videoRef, manifest, onActiveFindingsChange }: Ca
         const y = entry.bbox.y * scaleY;
         const color = SEVERITY_COLORS[entry.severity];
 
-        // Draw pill-shaped label card
-        const labelFont = "600 12px Inter, system-ui, sans-serif";
-        const costFont = "700 11px Inter, system-ui, sans-serif";
-        const labelH = 26;
+        // Draw pill-shaped label card (scale down on small canvases)
+        const scale = Math.min(1, canvas.width / 400);
+        const labelFont = `600 ${Math.round(12 * scale)}px Inter, system-ui, sans-serif`;
+        const costFont = `700 ${Math.round(11 * scale)}px Inter, system-ui, sans-serif`;
+        const labelH = Math.round(26 * scale);
         const r = labelH / 2; // pill radius
 
         ctx.font = labelFont;
@@ -78,8 +79,17 @@ export function CanvasOverlay({ videoRef, manifest, onActiveFindingsChange }: Ca
         const pillW = padX + dotR * 2 + 6 + labelTextW + gap + costTextW + padX;
 
         let pillX = x;
-        let pillY = Math.max(0, y - labelH - 6);
-        // Clamp to canvas bounds
+        let pillY = y - labelH - 6; // default: above bbox
+        // If pill would be above canvas, place it below the bbox instead
+        if (pillY < 4) {
+          const bboxBottom = entry.bbox.y * scaleY + entry.bbox.h * scaleY;
+          pillY = bboxBottom + 6;
+        }
+        // Final clamp
+        if (pillY + labelH > canvas.height - 4) {
+          pillY = canvas.height - labelH - 4;
+        }
+        // Clamp horizontal
         if (pillX + pillW > canvas.width - 4) pillX = canvas.width - pillW - 4;
         if (pillX < 4) pillX = 4;
 

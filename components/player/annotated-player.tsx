@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
-import { Download } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { CanvasOverlay } from "./canvas-overlay";
 import { FindingsSidebar } from "./findings-sidebar";
 import { recordAnnotatedVideo } from "@/lib/video-recorder";
@@ -72,31 +72,31 @@ export function AnnotatedPlayer({ videoSrc, manifest }: AnnotatedPlayerProps) {
         </div>
 
         {/* Jump to finding nav */}
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex items-center justify-center gap-2">
           <button
-            className="bg-white border border-[var(--color-border)] rounded-xl px-4 py-2 text-sm hover:bg-[var(--color-primary-bg)] transition-colors disabled:opacity-50 text-[var(--color-text-primary)]"
+            className="p-2 rounded-lg bg-white border border-[var(--color-border)] hover:bg-[var(--color-primary-bg)] transition-colors disabled:opacity-30"
             onClick={() => jumpToFinding("prev")}
             disabled={currentFindingIdx === 0}
           >
-            Prev Finding
+            <ChevronLeft size={18} className="text-[var(--color-text-primary)]" />
           </button>
-          <span className="text-sm text-[var(--color-text-secondary)]">
-            {currentFindingIdx + 1} / {manifest.length}
+          <span className="text-xs text-[var(--color-text-muted)] tabular w-12 text-center">
+            {currentFindingIdx + 1}/{manifest.length}
           </span>
           <button
-            className="bg-white border border-[var(--color-border)] rounded-xl px-4 py-2 text-sm hover:bg-[var(--color-primary-bg)] transition-colors disabled:opacity-50 text-[var(--color-text-primary)]"
+            className="p-2 rounded-lg bg-white border border-[var(--color-border)] hover:bg-[var(--color-primary-bg)] transition-colors disabled:opacity-30"
             onClick={() => jumpToFinding("next")}
             disabled={currentFindingIdx === manifest.length - 1}
           >
-            Next Finding
+            <ChevronRight size={18} className="text-[var(--color-text-primary)]" />
           </button>
           <button
-            className="bg-[var(--color-primary)] text-white rounded-xl px-4 py-2 text-sm hover:bg-[var(--color-primary-dark)] transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="ml-2 p-2 rounded-lg bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-dark)] transition-colors disabled:opacity-50"
             onClick={handleDownloadVideo}
             disabled={isRecording}
+            title={isRecording ? `Recording ${Math.round(recordProgress)}%` : "Download annotated video"}
           >
-            <Download size={14} />
-            {isRecording ? `Recording ${Math.round(recordProgress)}%...` : "Download Video"}
+            <Download size={18} />
           </button>
         </div>
       </div>
