@@ -2,6 +2,8 @@
 
 import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
+import { Upload, CheckCircle } from "lucide-react";
+import Button from "@/components/ui/Button";
 
 const fade = (delay: number) => ({
   initial: { opacity: 0, y: 16 },
@@ -9,69 +11,15 @@ const fade = (delay: number) => ({
   transition: { duration: 0.5, delay, ease: [0.25, 0.4, 0.25, 1] },
 });
 
-function UploadIcon() {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="#2C7BE5"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="17 8 12 3 7 8" />
-      <line x1="12" y1="3" x2="12" y2="15" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="#2C7BE5"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function Spinner() {
   return (
-    <svg
-      className="animate-spin h-5 w-5"
-      viewBox="0 0 24 24"
-      fill="none"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-      />
-    </svg>
+    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
   );
-}
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export default function HomePage() {
@@ -85,9 +33,7 @@ export default function HomePage() {
 
   const handleFile = useCallback((f: File) => {
     const ext = f.name.split(".").pop()?.toLowerCase();
-    if (ext === "mp4" || ext === "mov") {
-      setFile(f);
-    }
+    if (ext === "mp4" || ext === "mov") setFile(f);
   }, []);
 
   const handleDrop = useCallback(
@@ -97,45 +43,44 @@ export default function HomePage() {
       const dropped = e.dataTransfer.files[0];
       if (dropped) handleFile(dropped);
     },
-    [handleFile]
+    [handleFile],
   );
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setIsUploading(true);
-    // Pipeline hook goes here — currently simulates upload delay
     await new Promise((r) => setTimeout(r, 2000));
     setIsUploading(false);
   };
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen bg-base">
       {/* ─── Navbar ─── */}
-      <nav className="fixed inset-x-0 top-0 z-50 flex items-center justify-between px-6 py-3 backdrop-blur-md bg-black/30 border-b border-white/5">
+      <nav className="fixed inset-x-0 top-0 z-50 flex items-center justify-between px-6 py-3 bg-surface/80 backdrop-blur-md border-b border-border">
         <div className="flex items-center gap-2">
           <div className="h-5 w-5 rounded-sm bg-primary" />
-          <span className="text-white font-bold tracking-tight text-lg">
+          <span className="text-text-primary font-bold tracking-tight text-lg">
             HomeScope
           </span>
         </div>
         <div className="flex items-center gap-5">
           <a
             href="#how-it-works"
-            className="text-text-body text-sm hover:text-white transition-colors"
+            className="text-text-secondary text-sm hover:text-text-primary transition-colors duration-150"
           >
             How it works
           </a>
-          <button className="bg-primary text-white text-sm rounded-full px-4 py-1.5 font-medium hover:bg-primary-hover transition-colors">
+          <Button variant="primary" className="!py-1.5 !px-4 !text-sm !rounded-full">
             Get started
-          </button>
+          </Button>
         </div>
       </nav>
 
       {/* ─── Hero ─── */}
-      <main className="relative flex flex-col items-center pt-32 pb-20 px-4">
+      <main className="relative flex flex-col items-center pt-32 pb-20 px-4 max-w-7xl mx-auto">
         {/* Pill badge */}
         <motion.div {...fade(0)}>
-          <span className="inline-flex items-center gap-1.5 border border-primary/40 bg-primary/10 text-primary text-xs rounded-full px-3 py-1">
+          <span className="inline-flex items-center gap-1.5 border border-primary/40 bg-primary-bg text-primary-dark text-xs font-medium rounded-full px-3 py-1">
             🏠 AI-Powered Home Inspection
           </span>
         </motion.div>
@@ -145,15 +90,15 @@ export default function HomePage() {
           {...fade(0.1)}
           className="mt-6 text-center text-5xl font-bold leading-tight tracking-tight"
         >
-          <span className="text-white">Know exactly what you&rsquo;re buying</span>
+          <span className="text-text-primary">Know exactly what you&rsquo;re buying</span>
           <br />
-          <span className="text-text-body">before you make an offer.</span>
+          <span className="text-text-secondary">before you make an offer.</span>
         </motion.h1>
 
         {/* Subheadline */}
         <motion.p
           {...fade(0.2)}
-          className="mt-5 text-center text-lg text-text-body max-w-lg mx-auto font-light leading-relaxed"
+          className="mt-5 text-center text-lg text-text-secondary max-w-lg mx-auto font-light leading-relaxed"
         >
           Upload your walkthrough video. HomeScope&rsquo;s AI finds every defect,
           maps repair costs, and writes your negotiation letter.
@@ -171,7 +116,7 @@ export default function HomePage() {
           ].map((stat, i) => (
             <span
               key={i}
-              className="bg-white/5 border border-white/[0.08] text-text-body text-xs rounded-full px-3 py-1 font-light"
+              className="bg-white border border-border text-text-secondary text-xs font-medium rounded-full px-3 py-1 shadow-warm"
             >
               {stat}
             </span>
@@ -181,7 +126,7 @@ export default function HomePage() {
         {/* ─── Upload card ─── */}
         <motion.div
           {...fade(0.4)}
-          className="mt-12 w-full max-w-xl bg-surface border border-border rounded-2xl p-8 glow-primary-lg"
+          className="mt-12 w-full max-w-xl bg-white border border-border rounded-2xl p-8 shadow-warm-lg"
         >
           {/* Drop zone */}
           <div
@@ -198,8 +143,8 @@ export default function HomePage() {
               transition-all duration-200
               ${
                 isDragging
-                  ? "border-primary/60 bg-primary/5"
-                  : "border-border hover:border-primary/60 hover:bg-primary/5"
+                  ? "border-primary bg-primary-bg"
+                  : "border-border hover:border-primary hover:bg-primary-bg/50"
               }
             `}
           >
@@ -216,19 +161,8 @@ export default function HomePage() {
 
             {file ? (
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-sm rounded-full px-3 py-1">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
+                <span className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-medium rounded-full px-3 py-1">
+                  <CheckCircle size={14} />
                   {file.name}
                 </span>
                 <span className="text-text-muted text-sm">
@@ -237,8 +171,10 @@ export default function HomePage() {
               </div>
             ) : (
               <>
-                <UploadIcon />
-                <p className="text-white font-medium text-sm">
+                <div className="w-10 h-10 rounded-full bg-primary-bg flex items-center justify-center">
+                  <Upload size={20} className="text-primary" />
+                </div>
+                <p className="text-text-primary font-medium text-sm">
                   Drop your walkthrough video here
                 </p>
                 <p className="text-text-muted text-sm">
@@ -246,7 +182,7 @@ export default function HomePage() {
                 </p>
                 <button
                   type="button"
-                  className="text-primary text-sm hover:underline"
+                  className="text-primary text-sm font-medium hover:text-primary-dark hover:underline transition-colors duration-150"
                 >
                   or browse files
                 </button>
@@ -260,7 +196,7 @@ export default function HomePage() {
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             placeholder="Property address"
-            className="mt-4 w-full bg-card border border-border rounded-xl px-4 py-3 text-white text-sm placeholder:text-text-muted focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all"
+            className="mt-4 w-full bg-white border border-border rounded-xl px-4 py-3 text-text-primary text-sm placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-150"
           />
 
           {/* Analyze button */}
@@ -274,15 +210,10 @@ export default function HomePage() {
               rounded-xl py-3.5 font-semibold text-sm transition-all duration-200
               ${
                 canSubmit
-                  ? "bg-primary text-white hover:bg-primary-hover hover:glow-primary-btn cursor-pointer"
-                  : "bg-white/5 text-white/20 cursor-not-allowed"
+                  ? "bg-primary text-white hover:bg-primary-dark hover:shadow-primary-btn cursor-pointer"
+                  : "bg-[#EDE8E1] text-text-muted cursor-not-allowed"
               }
             `}
-            style={
-              canSubmit
-                ? {}
-                : undefined
-            }
           >
             {isUploading ? (
               <>
@@ -309,7 +240,7 @@ export default function HomePage() {
               key={i}
               className="flex items-center gap-1.5 text-text-muted text-xs"
             >
-              <CheckIcon />
+              <CheckCircle size={13} className="text-primary" />
               {item}
             </span>
           ))}

@@ -11,41 +11,32 @@ import {
 } from "react";
 import { Maximize, Minimize, Pause, Play, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Finding } from "@/lib/types";
+import { SEVERITY_CONFIG, type Severity } from "@/lib/severity";
 
 export interface AnnotatedPlayerHandle {
   seekTo: (time: number) => void;
 }
 
-const SEVERITY_COLOR: Record<string, string> = {
-  critical: "#F43F5E",
-  high: "#FB923C",
-  medium: "#FBBF24",
-  low: "#38BDF8",
-};
-
 const FADE_IN = 0.4;
 const FADE_OUT = 0.4;
-const CORNER_LEN = 20;
+const CORNER_LEN = 16;
 const CORNER_W = 3;
-const LABEL_FONT = '700 13px Inter, system-ui, sans-serif';
-const COST_FONT = '600 11px Inter, system-ui, sans-serif';
+const LABEL_FONT = '600 12px Inter, system-ui, sans-serif';
+const COST_FONT = '700 11px Inter, system-ui, sans-serif';
 const LABEL_PAD_X = 10;
-const LABEL_PAD_Y = 6;
-const LABEL_RADIUS = 8;
-const LABEL_GAP = 8;
+const LABEL_H = 26;
+const LABEL_GAP = 6;
 
 function clamp(v: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, v));
 }
 
 function easeAlpha(t: number, start: number, end: number): number {
-  const dur = end - start;
-  if (dur <= 0) return 1;
   const fadeInEnd = start + FADE_IN;
   const fadeOutStart = end - FADE_OUT;
   if (t < fadeInEnd) {
     const p = clamp((t - start) / FADE_IN, 0, 1);
-    return p * p * (3 - 2 * p); // smoothstep
+    return p * p * (3 - 2 * p);
   }
   if (t > fadeOutStart) {
     const p = clamp((end - t) / FADE_OUT, 0, 1);
@@ -56,59 +47,37 @@ function easeAlpha(t: number, start: number, end: number): number {
 
 function drawCornerAccents(
   ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  color: string,
-  alpha: number,
+  x: number, y: number, w: number, h: number,
+  color: string, alpha: number,
 ) {
   ctx.save();
   ctx.strokeStyle = color;
   ctx.lineWidth = CORNER_W;
   ctx.globalAlpha = alpha;
   ctx.lineCap = "square";
-
   const cl = Math.min(CORNER_LEN, w / 3, h / 3);
 
-  // Top-left
   ctx.beginPath();
-  ctx.moveTo(x, y + cl);
-  ctx.lineTo(x, y);
-  ctx.lineTo(x + cl, y);
+  ctx.moveTo(x, y + cl); ctx.lineTo(x, y); ctx.lineTo(x + cl, y);
   ctx.stroke();
-  // Top-right
   ctx.beginPath();
-  ctx.moveTo(x + w - cl, y);
-  ctx.lineTo(x + w, y);
-  ctx.lineTo(x + w, y + cl);
+  ctx.moveTo(x + w - cl, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + cl);
   ctx.stroke();
-  // Bottom-right
   ctx.beginPath();
-  ctx.moveTo(x + w, y + h - cl);
-  ctx.lineTo(x + w, y + h);
-  ctx.lineTo(x + w - cl, y + h);
+  ctx.moveTo(x + w, y + h - cl); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w - cl, y + h);
   ctx.stroke();
-  // Bottom-left
   ctx.beginPath();
-  ctx.moveTo(x + cl, y + h);
-  ctx.lineTo(x, y + h);
-  ctx.lineTo(x, y + h - cl);
+  ctx.moveTo(x + cl, y + h); ctx.lineTo(x, y + h); ctx.lineTo(x, y + h - cl);
   ctx.stroke();
 
   ctx.restore();
 }
 
-function drawLabelCard(
+function drawLabelPill(
   ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  maxW: number,
-  label: string,
-  costText: string,
-  color: string,
-  alpha: number,
-  canvasW: number,
+  x: number, y: number, bboxW: number,
+  label: string, costText: string,
+  color: string, alpha: number, canvasW: number,
 ) {
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -117,12 +86,13 @@ function drawLabelCard(
   const labelW = ctx.measureText(label).width;
   ctx.font = COST_FONT;
   const costW = ctx.measureText(costText).width;
-  const dotR = 4;
-  const gap = 12;
+  const dotR = 3.5;
+  const gap = 10;
 
   const totalW = dotR * 2 + 6 + labelW + gap + costW + LABEL_PAD_X * 2;
-  const cardW = Math.min(totalW, Math.max(maxW, 180));
-  const cardH = 28;
+  const cardW = Math.min(totalW, Math.max(bboxW, 160));
+  const cardH = LABEL_H;
+  const r = cardH / 2; // pill radius
 
   let cx = x;
   let cy = y - cardH - LABEL_GAP;
@@ -130,12 +100,24 @@ function drawLabelCard(
   if (cx < 4) cx = 4;
   if (cy < 4) cy = y + LABEL_GAP;
 
-  // Rounded rect
+  // White pill with warm shadow
   ctx.beginPath();
-  ctx.roundRect(cx, cy, cardW, cardH, LABEL_RADIUS);
-  ctx.fillStyle = color;
-  ctx.globalAlpha = alpha * 0.9;
+  ctx.roundRect(cx, cy, cardW, cardH, r);
+  ctx.fillStyle = "white";
+  ctx.shadowColor = "rgba(120,100,80,0.12)";
+  ctx.shadowBlur = 8;
+  ctx.shadowOffsetY = 2;
   ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+
+  // Border in severity color
+  ctx.beginPath();
+  ctx.roundRect(cx, cy, cardW, cardH, r);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1;
+  ctx.globalAlpha = alpha * 0.4;
+  ctx.stroke();
   ctx.globalAlpha = alpha;
 
   // Severity dot
@@ -143,19 +125,18 @@ function drawLabelCard(
   const dotCy = cy + cardH / 2;
   ctx.beginPath();
   ctx.arc(dotCx, dotCy, dotR, 0, Math.PI * 2);
-  ctx.fillStyle = "white";
+  ctx.fillStyle = color;
   ctx.fill();
 
-  // Label text
+  // Label text in severity color
   ctx.font = LABEL_FONT;
-  ctx.fillStyle = "white";
+  ctx.fillStyle = color;
   ctx.textBaseline = "middle";
   ctx.fillText(label, dotCx + dotR + 6, dotCy, cardW - LABEL_PAD_X * 2 - dotR * 2 - 6 - gap - costW);
 
   // Cost text
   ctx.font = COST_FONT;
-  ctx.globalAlpha = alpha * 0.8;
-  ctx.fillStyle = "white";
+  ctx.fillStyle = "#1C1917";
   ctx.textAlign = "right";
   ctx.fillText(costText, cx + cardW - LABEL_PAD_X, dotCy);
 
@@ -197,9 +178,7 @@ const AnnotatedPlayer = forwardRef<AnnotatedPlayerHandle, Props>(function Annota
   const [hoverTime, setHoverTime] = useState<number | null>(null);
   const [showControls, setShowControls] = useState(true);
 
-  const sortedFindings = [...findings].sort(
-    (a, b) => a.timestamp_start - b.timestamp_start,
-  );
+  const sortedFindings = [...findings].sort((a, b) => a.timestamp_start - b.timestamp_start);
 
   const seekTo = useCallback((time: number) => {
     const v = videoRef.current;
@@ -210,7 +189,6 @@ const AnnotatedPlayer = forwardRef<AnnotatedPlayerHandle, Props>(function Annota
 
   useImperativeHandle(ref, () => ({ seekTo }), [seekTo]);
 
-  // Resize observer to sync canvas with video display dimensions
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -221,7 +199,6 @@ const AnnotatedPlayer = forwardRef<AnnotatedPlayerHandle, Props>(function Annota
     return () => ro.disconnect();
   }, []);
 
-  // Canvas rendering loop
   const renderFrame = useCallback(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -240,35 +217,55 @@ const AnnotatedPlayer = forwardRef<AnnotatedPlayerHandle, Props>(function Annota
 
     for (const f of findings) {
       if (t < f.timestamp_start || t > f.timestamp_end) continue;
-
       newActive.add(f.id);
 
       const alpha = easeAlpha(t, f.timestamp_start, f.timestamp_end);
-      const color = SEVERITY_COLOR[f.severity] ?? "#38BDF8";
-      const bx = f.bbox.x * cw;
-      const by = f.bbox.y * ch;
-      const bw = f.bbox.w * cw;
-      const bh = f.bbox.h * ch;
+      const sev = SEVERITY_CONFIG[f.severity as Severity];
+      const color = sev?.color ?? "#5A9BB8";
+      const px = f.bbox.x * cw;
+      const py = f.bbox.y * ch;
+      const pw = f.bbox.w * cw;
+      const ph = f.bbox.h * ch;
 
-      // Outer glow
+      // Soft fill inside bbox
       ctx.save();
-      ctx.shadowBlur = 20;
+      ctx.globalAlpha = alpha * 0.06;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.roundRect(px, py, pw, ph, 6);
+      ctx.fill();
+      ctx.restore();
+
+      // Glow pass
+      ctx.save();
+      ctx.globalAlpha = alpha * 0.35;
+      ctx.shadowBlur = 12;
       ctx.shadowColor = color;
       ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(px, py, pw, ph, 6);
+      ctx.stroke();
+      ctx.restore();
+
+      // Crisp border
+      ctx.save();
+      ctx.globalAlpha = alpha * 0.9;
+      ctx.strokeStyle = color;
       ctx.lineWidth = 2;
-      ctx.globalAlpha = alpha;
-      ctx.strokeRect(bx, by, bw, bh);
+      ctx.beginPath();
+      ctx.roundRect(px, py, pw, ph, 6);
+      ctx.stroke();
       ctx.restore();
 
       // Corner accents
-      drawCornerAccents(ctx, bx, by, bw, bh, color, alpha);
+      drawCornerAccents(ctx, px, py, pw, ph, color, alpha);
 
-      // Label card
+      // Label pill
       const costText = formatCost(f.repair_cost_low, f.repair_cost_high);
-      drawLabelCard(ctx, bx, by, bw, f.label, costText, color, alpha, cw);
+      drawLabelPill(ctx, px, py, pw, f.label, costText, color, alpha, cw);
     }
 
-    // Fire callbacks for newly-active findings
     newActive.forEach((id) => {
       if (!activeFindingsRef.current.has(id)) {
         onFindingActive?.(id);
@@ -281,7 +278,6 @@ const AnnotatedPlayer = forwardRef<AnnotatedPlayerHandle, Props>(function Annota
     }
   }, [findings, onFindingActive]);
 
-  // Start/stop render loop based on play state
   useEffect(() => {
     if (playing) {
       rafRef.current = requestAnimationFrame(renderFrame);
@@ -292,31 +288,20 @@ const AnnotatedPlayer = forwardRef<AnnotatedPlayerHandle, Props>(function Annota
     return () => cancelAnimationFrame(rafRef.current);
   }, [playing, renderFrame]);
 
-  // Re-render when canvas resizes
-  useEffect(() => {
-    renderFrame();
-  }, [canvasSize, renderFrame]);
+  useEffect(() => { renderFrame(); }, [canvasSize, renderFrame]);
 
   const togglePlay = useCallback(() => {
     const v = videoRef.current;
     if (!v) return;
-    if (v.paused) {
-      v.play();
-      setPlaying(true);
-    } else {
-      v.pause();
-      setPlaying(false);
-    }
+    if (v.paused) { v.play(); setPlaying(true); }
+    else { v.pause(); setPlaying(false); }
   }, []);
 
   const toggleFullscreen = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else {
-      el.requestFullscreen();
-    }
+    if (document.fullscreenElement) document.exitFullscreen();
+    else el.requestFullscreen();
   }, []);
 
   useEffect(() => {
@@ -325,21 +310,12 @@ const AnnotatedPlayer = forwardRef<AnnotatedPlayerHandle, Props>(function Annota
     return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
 
-  // Auto-hide controls
   useEffect(() => {
-    if (!playing) {
-      setShowControls(true);
-      return;
-    }
+    if (!playing) { setShowControls(true); return; }
     setShowControls(true);
     const timer = setTimeout(() => setShowControls(false), 3000);
     return () => clearTimeout(timer);
   }, [playing, currentTime]);
-
-  // Finding navigation
-  const currentFindingIdx = sortedFindings.findIndex(
-    (f) => currentTime >= f.timestamp_start && currentTime <= f.timestamp_end,
-  );
 
   const jumpToFinding = useCallback(
     (dir: -1 | 1) => {
@@ -380,28 +356,21 @@ const AnnotatedPlayer = forwardRef<AnnotatedPlayerHandle, Props>(function Annota
   return (
     <div
       ref={containerRef}
-      className="relative rounded-2xl overflow-hidden bg-black border border-white/10 group"
-      style={{ boxShadow: "0 0 40px rgba(0,0,0,0.6)" }}
+      className="relative rounded-2xl overflow-hidden bg-[#1C1917] border border-border group shadow-warm-lg"
       onMouseMove={() => playing && setShowControls(true)}
     >
-      {/* Video */}
       <video
         ref={videoRef}
         src={videoUrl}
         className="w-full block object-contain"
         playsInline
         preload="metadata"
-        onLoadedMetadata={() => {
-          if (videoRef.current) setDuration(videoRef.current.duration);
-        }}
+        onLoadedMetadata={() => { if (videoRef.current) setDuration(videoRef.current.duration); }}
         onEnded={() => setPlaying(false)}
-        onTimeUpdate={() => {
-          if (videoRef.current) setCurrentTime(videoRef.current.currentTime);
-        }}
+        onTimeUpdate={() => { if (videoRef.current) setCurrentTime(videoRef.current.currentTime); }}
         onClick={togglePlay}
       />
 
-      {/* Canvas overlay */}
       <canvas
         ref={canvasRef}
         width={canvasSize.w}
@@ -410,54 +379,42 @@ const AnnotatedPlayer = forwardRef<AnnotatedPlayerHandle, Props>(function Annota
         style={{ width: canvasSize.w, height: canvasSize.h }}
       />
 
-      {/* Click-to-play overlay (when paused and at start) */}
       {!playing && currentTime < 0.5 && (
         <button
           onClick={togglePlay}
-          className="absolute inset-0 flex items-center justify-center bg-black/30 transition-opacity"
+          className="absolute inset-0 flex items-center justify-center bg-black/20 transition-opacity"
         >
-          <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center">
-            <Play size={28} className="text-white ml-1" fill="white" />
+          <div className="w-16 h-16 rounded-full bg-white/80 backdrop-blur-sm shadow-warm-lg flex items-center justify-center">
+            <Play size={28} className="text-primary ml-1" fill="#7BB8D4" />
           </div>
         </button>
       )}
 
       {/* ─── Bottom controls ─── */}
-      <div
-        className={`absolute inset-x-0 bottom-0 transition-opacity duration-300 ${
-          showControls ? "opacity-100" : "opacity-0"
-        }`}
-      >
-        {/* Gradient fade */}
-        <div className="h-24 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
-
+      <div className={`absolute inset-x-0 bottom-0 transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"}`}>
+        <div className="h-24 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
         <div className="absolute inset-x-0 bottom-0 px-4 pb-3 flex flex-col gap-2">
           {/* Timeline */}
           <div
-            className="relative w-full h-5 flex items-center cursor-pointer group/tl"
+            className="relative w-full h-5 flex items-center cursor-pointer"
             onClick={handleTimelineClick}
             onMouseMove={handleTimelineHover}
             onMouseLeave={() => setHoverTime(null)}
           >
-            {/* Track */}
             <div className="absolute inset-x-0 h-1 bg-white/20 rounded-full top-1/2 -translate-y-1/2">
-              {/* Played fill */}
               <div
                 className="absolute inset-y-0 left-0 bg-white rounded-full"
                 style={{ width: duration ? `${(currentTime / duration) * 100}%` : "0%" }}
               />
-              {/* Hover scrub preview */}
               {hoverTime !== null && (
                 <div
-                  className="absolute top-[-28px] -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded pointer-events-none"
+                  className="absolute top-[-28px] -translate-x-1/2 bg-white text-text-primary text-xs px-2 py-1 rounded shadow-warm pointer-events-none"
                   style={{ left: `${(hoverTime / (duration || 1)) * 100}%` }}
                 >
                   {formatTime(hoverTime)}
                 </div>
               )}
             </div>
-
-            {/* Finding markers */}
             {sortedFindings.map((f) =>
               duration ? (
                 <div
@@ -465,7 +422,7 @@ const AnnotatedPlayer = forwardRef<AnnotatedPlayerHandle, Props>(function Annota
                   className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-2 rounded-full z-10"
                   style={{
                     left: `${(f.timestamp_start / duration) * 100}%`,
-                    backgroundColor: SEVERITY_COLOR[f.severity],
+                    backgroundColor: SEVERITY_CONFIG[f.severity as Severity]?.color ?? "#5A9BB8",
                   }}
                   title={f.label}
                 />
@@ -473,38 +430,31 @@ const AnnotatedPlayer = forwardRef<AnnotatedPlayerHandle, Props>(function Annota
             )}
           </div>
 
-          {/* Buttons row */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <button onClick={togglePlay} className="text-white hover:text-white/80 transition-colors">
+              <button onClick={togglePlay} className="text-white hover:text-white/80 transition-colors duration-150">
                 {playing ? <Pause size={20} fill="white" /> : <Play size={20} fill="white" />}
               </button>
-              <span className="text-white text-sm tabular-nums font-light">
+              <span className="text-white text-sm tabular font-light">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
             </div>
-
             <div className="flex items-center gap-2">
-              {/* Finding jump controls */}
               <button
                 onClick={() => jumpToFinding(-1)}
-                className="flex items-center gap-1 bg-black/60 backdrop-blur border border-white/10 text-white text-xs rounded-full px-3 py-1 hover:bg-white/10 transition-colors"
+                className="flex items-center gap-1 bg-white/10 backdrop-blur border border-white/20 text-white text-xs rounded-full px-3 py-1 hover:bg-white/20 transition-all duration-150"
               >
                 <ChevronLeft size={12} />
                 Prev
               </button>
               <button
                 onClick={() => jumpToFinding(1)}
-                className="flex items-center gap-1 bg-black/60 backdrop-blur border border-white/10 text-white text-xs rounded-full px-3 py-1 hover:bg-white/10 transition-colors"
+                className="flex items-center gap-1 bg-white/10 backdrop-blur border border-white/20 text-white text-xs rounded-full px-3 py-1 hover:bg-white/20 transition-all duration-150"
               >
                 Next
                 <ChevronRight size={12} />
               </button>
-
-              <button
-                onClick={toggleFullscreen}
-                className="text-white hover:text-white/80 transition-colors ml-1"
-              >
+              <button onClick={toggleFullscreen} className="text-white hover:text-white/80 transition-colors duration-150 ml-1">
                 {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
               </button>
             </div>
