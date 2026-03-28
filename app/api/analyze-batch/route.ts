@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   const frameIndices = frames.map((f) => f.index);
 
   const result = await generateText({
-    model: "anthropic/claude-sonnet-4.5",
+    model: "google/gemini-2.5-flash",
     system: SYSTEM_PROMPT,
     messages: [
       {
