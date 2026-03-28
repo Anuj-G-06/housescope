@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { motion } from "framer-motion";
+import { Upload, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dropzone } from "@/components/upload/dropzone";
 import { AddressInput } from "@/components/upload/address-input";
-import { VideoPreview } from "@/components/upload/video-preview";
 import { extractFrames } from "@/lib/frame-extractor";
 import { deduplicateFindings } from "@/lib/deduplication";
 import { buildAnalysisResult } from "@/lib/manifest-builder";
@@ -18,6 +18,12 @@ import { Separator } from "@/components/ui/separator";
 import { exportReportPDF } from "@/lib/pdf-export";
 import { BATCH_SIZE } from "@/lib/constants";
 import type { AppStage, FrameData, Finding, AnalysisResult } from "@/lib/types";
+
+const fade = (delay: number) => ({
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5, delay, ease: [0.25, 0.4, 0.25, 1] as const },
+});
 
 export default function Home() {
   const [stage, setStage] = useState<AppStage>("upload");
@@ -95,42 +101,147 @@ export default function Home() {
     setStage("results");
   };
 
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      const file = e.dataTransfer.files[0];
+      if (file && (file.type === "video/mp4" || file.type === "video/quicktime")) {
+        setVideoFile(file);
+      }
+    },
+    []
+  );
+
+  const handleFileInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) setVideoFile(file);
+    },
+    []
+  );
+
   return (
-    <main className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-sm">
-        <div className="mx-auto max-w-5xl flex items-center justify-between px-4 h-14">
-          <span className="text-lg font-bold tracking-tight">HomeScope</span>
-          {stage !== "upload" && (
-            <span className="text-sm text-muted-foreground">{address}</span>
-          )}
+    <main className="min-h-screen bg-[var(--color-background)]">
+      <nav className="fixed inset-x-0 top-0 z-50 flex items-center justify-between px-6 py-3 bg-[var(--color-surface)]/80 backdrop-blur-md border-b border-[var(--color-border)]">
+        <div className="flex items-center gap-2">
+          <div className="h-5 w-5 rounded-sm bg-[var(--color-primary)]" />
+          <span className="text-[var(--color-text-primary)] font-bold tracking-tight text-lg">HomeScope</span>
         </div>
-      </header>
+        {stage !== "upload" && (
+          <span className="text-sm text-[var(--color-text-secondary)]">{address}</span>
+        )}
+      </nav>
 
       {stage === "upload" && (
-        <div className="mx-auto max-w-2xl px-4 py-16 space-y-8">
-          <div className="text-center space-y-2">
-            <h1 className="text-4xl font-bold tracking-tight">HomeScope</h1>
-            <p className="text-muted-foreground text-lg">
-              Upload a walkthrough video. Get an AI inspection in 45 seconds.
-            </p>
-          </div>
-
-          {!videoFile ? (
-            <Dropzone onFileSelect={setVideoFile} />
-          ) : (
-            <VideoPreview file={videoFile} onRemove={() => setVideoFile(null)} />
-          )}
-
-          <AddressInput value={address} onChange={setAddress} />
-
-          <Button
-            size="lg"
-            className="w-full text-lg h-14"
-            disabled={!videoFile || !address}
-            onClick={handleAnalyze}
+        <div className="flex flex-col items-center pt-24 pb-16 px-4">
+          <motion.span
+            {...fade(0)}
+            className="inline-flex items-center gap-1.5 border border-[var(--color-primary)]/40 bg-[var(--color-primary-bg)] text-[var(--color-primary-dark)] text-xs font-medium rounded-full px-3 py-1"
           >
-            Analyze Property
-          </Button>
+            🏠 AI-Powered Home Inspection
+          </motion.span>
+
+          <motion.h1
+            {...fade(0.1)}
+            className="mt-6 text-center text-4xl sm:text-5xl font-bold tracking-tight leading-tight max-w-2xl"
+          >
+            <span className="text-[var(--color-text-primary)]">Know exactly what you&apos;re buying</span>{" "}
+            <span className="text-[var(--color-text-secondary)]">before you make an offer.</span>
+          </motion.h1>
+
+          <motion.p
+            {...fade(0.2)}
+            className="mt-4 text-center text-[var(--color-text-secondary)] text-lg max-w-xl"
+          >
+            Upload a walkthrough video and get an AI-powered inspection report in 45 seconds — spot issues, estimate repairs, and negotiate with confidence.
+          </motion.p>
+
+          <motion.div
+            {...fade(0.3)}
+            className="mt-6 flex flex-wrap justify-center gap-3"
+          >
+            {[
+              "25% of buyers waive inspections",
+              "$14K avg negotiation savings",
+              "$3B+ market",
+            ].map((stat) => (
+              <span
+                key={stat}
+                className="text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-full px-3 py-1 bg-white"
+              >
+                {stat}
+              </span>
+            ))}
+          </motion.div>
+
+          <motion.div
+            {...fade(0.4)}
+            className="mt-12 w-full max-w-xl bg-white border border-[var(--color-border)] rounded-2xl p-8"
+            style={{ boxShadow: '0 2px 8px rgba(120,100,80,0.08), 0 8px 32px rgba(120,100,80,0.06)' }}
+          >
+            {/* Drop zone */}
+            <div
+              className={`relative flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-10 text-center transition-colors cursor-pointer ${
+                isDragging
+                  ? "border-[var(--color-primary)] bg-[var(--color-primary-bg)]"
+                  : "border-[var(--color-border)] hover:border-[var(--color-primary)]/50"
+              }`}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={handleDrop}
+              onClick={() => document.getElementById("video-input")?.click()}
+            >
+              {!videoFile ? (
+                <>
+                  <div className="flex items-center justify-center h-12 w-12 rounded-full bg-[var(--color-primary-bg)] mb-4">
+                    <Upload className="h-5 w-5 text-[var(--color-primary)]" />
+                  </div>
+                  <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                    Drop your walkthrough video here
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                    MP4 or MOV, up to 3 minutes
+                  </p>
+                </>
+              ) : (
+                <span className="inline-flex items-center gap-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-full px-4 py-2">
+                  <CheckCircle className="h-4 w-4" />
+                  {videoFile.name}
+                  <button
+                    type="button"
+                    className="ml-1 text-green-500 hover:text-green-700 text-xs"
+                    onClick={(e) => { e.stopPropagation(); setVideoFile(null); }}
+                  >
+                    ✕
+                  </button>
+                </span>
+              )}
+              <input
+                id="video-input"
+                type="file"
+                accept="video/mp4,video/quicktime"
+                className="hidden"
+                onChange={handleFileInput}
+              />
+            </div>
+
+            {/* Address input */}
+            <div className="mt-6">
+              <AddressInput value={address} onChange={setAddress} />
+            </div>
+
+            {/* Submit button */}
+            <button
+              className="mt-6 w-full bg-[var(--color-primary)] text-white font-medium rounded-xl py-3 hover:bg-[var(--color-primary-dark)] transition-colors disabled:opacity-50"
+              disabled={!videoFile || !address}
+              onClick={handleAnalyze}
+            >
+              Analyze Property
+            </button>
+          </motion.div>
         </div>
       )}
 
@@ -145,7 +256,7 @@ export default function Home() {
       )}
 
       {stage === "results" && analysisResult && videoFile && (
-        <div className="mx-auto max-w-5xl px-4 py-8 space-y-10">
+        <div className="mx-auto max-w-5xl px-4 pt-20 pb-8 space-y-10">
           <div className="text-center space-y-1">
             <h2 className="text-3xl font-bold">Inspection Results</h2>
             <p className="text-muted-foreground">{address}</p>
@@ -210,7 +321,7 @@ export default function Home() {
         </div>
       )}
 
-      <footer className="border-t py-6 text-center text-xs text-muted-foreground">
+      <footer className="border-t border-[var(--color-border)] py-6 text-center text-xs text-[var(--color-text-muted)]">
         AI-assisted triage — not a substitute for a licensed home inspection.
       </footer>
     </main>
