@@ -9,6 +9,13 @@ import { extractFrames } from "@/lib/frame-extractor";
 import { deduplicateFindings } from "@/lib/deduplication";
 import { buildAnalysisResult } from "@/lib/manifest-builder";
 import { ProcessingScreen } from "@/components/processing/processing-screen";
+import { AnnotatedPlayer } from "@/components/player/annotated-player";
+import { RiskScore } from "@/components/report/risk-score";
+import { FindingsReport } from "@/components/report/findings-report";
+import { CostBreakdown } from "@/components/report/cost-breakdown";
+import { NegotiationBrief } from "@/components/report/negotiation-brief";
+import { Separator } from "@/components/ui/separator";
+import { exportReportPDF } from "@/lib/pdf-export";
 import { BATCH_SIZE } from "@/lib/constants";
 import type { AppStage, FrameData, Finding, AnalysisResult } from "@/lib/types";
 
@@ -77,6 +84,15 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-background">
+      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-sm">
+        <div className="mx-auto max-w-5xl flex items-center justify-between px-4 h-14">
+          <span className="text-lg font-bold tracking-tight">HomeScope</span>
+          {stage !== "upload" && (
+            <span className="text-sm text-muted-foreground">{address}</span>
+          )}
+        </div>
+      </header>
+
       {stage === "upload" && (
         <div className="mx-auto max-w-2xl px-4 py-16 space-y-8">
           <div className="text-center space-y-2">
@@ -115,11 +131,75 @@ export default function Home() {
         />
       )}
 
-      {stage === "results" && (
-        <div className="mx-auto max-w-4xl px-4 py-8">
-          <p className="text-center text-lg">Results... (wired in Task 9-10)</p>
+      {stage === "results" && analysisResult && videoFile && (
+        <div className="mx-auto max-w-5xl px-4 py-8 space-y-10">
+          <div className="text-center space-y-1">
+            <h2 className="text-3xl font-bold">Inspection Results</h2>
+            <p className="text-muted-foreground">{address}</p>
+          </div>
+
+          <AnnotatedPlayer
+            videoSrc={URL.createObjectURL(videoFile)}
+            manifest={analysisResult.manifest}
+          />
+
+          <Separator />
+
+          <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-8">
+            <RiskScore score={analysisResult.risk_score} />
+            <CostBreakdown
+              manifest={analysisResult.manifest}
+              totalCostLow={analysisResult.total_cost_low}
+              totalCostHigh={analysisResult.total_cost_high}
+            />
+          </div>
+
+          <Separator />
+
+          <FindingsReport
+            manifest={analysisResult.manifest}
+            onSeek={(t) => {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
+
+          <Separator />
+
+          <NegotiationBrief result={analysisResult} address={address} />
+
+          <Separator />
+
+          <div className="flex gap-3 justify-center pb-12">
+            <Button
+              variant="outline"
+              onClick={() => exportReportPDF(analysisResult, address)}
+            >
+              Export PDF Report
+            </Button>
+            {videoUrl && (
+              <Button
+                variant="outline"
+                onClick={() => navigator.clipboard.writeText(videoUrl)}
+              >
+                Copy Shareable Video Link
+              </Button>
+            )}
+            <Button variant="ghost" onClick={() => {
+              setStage("upload");
+              setVideoFile(null);
+              setAddress("");
+              setAnalysisResult(null);
+              setLiveFindings([]);
+            }}>
+              Analyze Another Property
+            </Button>
+          </div>
         </div>
       )}
+
+      <footer className="border-t py-6 text-center text-xs text-muted-foreground">
+        AI-assisted triage — not a substitute for a licensed home inspection.
+      </footer>
     </main>
   );
 }
