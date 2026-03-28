@@ -1,6 +1,7 @@
 import { generateText, Output } from "ai";
 import { NextResponse } from "next/server";
 import { SYSTEM_PROMPT, USER_PROMPT_TEMPLATE, batchFindingsSchema } from "@/lib/prompts";
+import { CONFIDENCE_THRESHOLD } from "@/lib/constants";
 import type { BatchRequest, Finding } from "@/lib/types";
 
 export const maxDuration = 60;
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
   if (result.output) {
     for (const frameFinding of result.output.frame_findings) {
       for (const f of frameFinding.findings) {
-        if (f.confidence >= 0.75) {
+        if (f.confidence >= CONFIDENCE_THRESHOLD) {
           const sourceFrame = frames.find((fr) => fr.index === frameFinding.frame_index);
           findings.push({
             ...f,

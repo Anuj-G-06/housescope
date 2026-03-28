@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Dropzone } from "@/components/upload/dropzone";
 import { AddressInput } from "@/components/upload/address-input";
@@ -31,6 +31,11 @@ export default function Home() {
   const [statusText, setStatusText] = useState("");
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
+  const videoObjectUrl = useMemo(() => {
+    if (videoFile && stage === "results") return URL.createObjectURL(videoFile);
+    return null;
+  }, [videoFile, stage]);
+
   const handleAnalyze = async () => {
     if (!videoFile) return;
     setStage("processing");
@@ -60,14 +65,22 @@ export default function Home() {
 
     for (let i = 0; i < batches.length; i++) {
       const batch = batches[i];
-      const res = await fetch("/api/analyze-batch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ frames: batch, address }),
-      });
-      const data = await res.json();
-      allFindings.push(...data.findings);
-      setLiveFindings([...allFindings]);
+      try {
+        const res = await fetch("/api/analyze-batch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ frames: batch, address }),
+        });
+        if (!res.ok) {
+          console.error(`Batch ${i} failed with status ${res.status}`);
+          continue;
+        }
+        const data = await res.json();
+        allFindings.push(...data.findings);
+        setLiveFindings([...allFindings]);
+      } catch (err) {
+        console.error(`Batch ${i} error:`, err);
+      }
       setFramesAnalyzed(Math.min((i + 1) * BATCH_SIZE, frames.length));
       setProgress(30 + ((i + 1) / batches.length) * 60); // 30-90%
     }
@@ -139,7 +152,7 @@ export default function Home() {
           </div>
 
           <AnnotatedPlayer
-            videoSrc={URL.createObjectURL(videoFile)}
+            videoSrc={videoObjectUrl!}
             manifest={analysisResult.manifest}
           />
 
