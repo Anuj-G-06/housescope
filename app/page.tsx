@@ -225,7 +225,7 @@ export default function HomePage() {
   /* ─── Results: full-screen with view-specific bottom nav ─── */
   if (stage === "results" && analysisResult) {
     return (
-      <main className="flex flex-col h-screen bg-[var(--color-background)] overflow-hidden">
+      <main className="flex flex-col bg-[var(--color-background)] overflow-hidden" style={{ height: "100dvh" }}>
         {/* Top bar */}
         <div className="flex items-center gap-3 px-4 py-3 bg-[var(--color-surface)]/80 backdrop-blur-md border-b border-[var(--color-border)] shrink-0">
           <button onClick={handleBack} className="p-1 -ml-1 rounded-lg hover:bg-[var(--color-muted)] transition-colors">

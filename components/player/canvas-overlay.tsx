@@ -8,7 +8,37 @@ function smoothstep(t: number): number {
   return t * t * (3 - 2 * t);
 }
 
-/* ── Component ── */
+/**
+ * Compute the actual rendered video rect inside a container using object-contain.
+ * Returns { offsetX, offsetY, renderW, renderH }.
+ */
+function getVideoRect(video: HTMLVideoElement) {
+  const cw = video.clientWidth;
+  const ch = video.clientHeight;
+  const vw = video.videoWidth || cw;
+  const vh = video.videoHeight || ch;
+
+  const containerRatio = cw / ch;
+  const videoRatio = vw / vh;
+
+  let renderW: number, renderH: number, offsetX: number, offsetY: number;
+
+  if (videoRatio > containerRatio) {
+    // Video wider than container — pillarboxed vertically (bars top/bottom)
+    renderW = cw;
+    renderH = cw / videoRatio;
+    offsetX = 0;
+    offsetY = (ch - renderH) / 2;
+  } else {
+    // Video taller than container — letterboxed horizontally (bars left/right)
+    renderH = ch;
+    renderW = ch * videoRatio;
+    offsetX = (cw - renderW) / 2;
+    offsetY = 0;
+  }
+
+  return { offsetX, offsetY, renderW, renderH };
+}
 
 interface CanvasOverlayProps {
   videoRef: React.RefObject<HTMLVideoElement | null>;
@@ -34,8 +64,8 @@ export function CanvasOverlay({ videoRef, manifest, onActiveFindingsChange }: Ca
       canvas.height = video.clientHeight;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const scaleX = canvas.width;
-      const scaleY = canvas.height;
+      // Get actual rendered video area (accounts for object-contain letterboxing)
+      const { offsetX, offsetY, renderW, renderH } = getVideoRect(video);
       const activeIds: string[] = [];
 
       for (const entry of manifest) {
@@ -44,7 +74,6 @@ export function CanvasOverlay({ videoRef, manifest, onActiveFindingsChange }: Ca
 
         activeIds.push(entry.id);
 
-        // Calculate fade opacity with smoothstep easing
         const fadeInEnd = entry.timestamp_start + FINDING_FADE_IN_MS / 1000;
         const fadeOutStart = entry.timestamp_end - FINDING_FADE_OUT_MS / 1000;
         let opacity = 1;
@@ -56,16 +85,20 @@ export function CanvasOverlay({ videoRef, manifest, onActiveFindingsChange }: Ca
           opacity = smoothstep(p);
         }
 
-        const x = entry.bbox.x * scaleX;
-        const y = entry.bbox.y * scaleY;
+        // Map normalized coords to actual rendered video area
+        const x = offsetX + entry.bbox.x * renderW;
+        const y = offsetY + entry.bbox.y * renderH;
         const color = SEVERITY_COLORS[entry.severity];
 
-        // Draw pill-shaped label card (scale down on small canvases)
-        const scale = Math.min(1, canvas.width / 400);
+        // Scale pill size for small screens
+        const scale = Math.min(1, renderW / 350);
         const labelFont = `600 ${Math.round(12 * scale)}px Inter, system-ui, sans-serif`;
         const costFont = `700 ${Math.round(11 * scale)}px Inter, system-ui, sans-serif`;
-        const labelH = Math.round(26 * scale);
-        const r = labelH / 2; // pill radius
+        const labelH = Math.round(24 * scale);
+        const r = labelH / 2;
+        const dotR = Math.round(3 * scale);
+        const gap = Math.round(8 * scale);
+        const padX = Math.round(8 * scale);
 
         ctx.font = labelFont;
         const labelTextW = ctx.measureText(entry.label).width;
@@ -73,57 +106,63 @@ export function CanvasOverlay({ videoRef, manifest, onActiveFindingsChange }: Ca
         const costText = `$${entry.repair_cost_low.toLocaleString()}\u2013$${entry.repair_cost_high.toLocaleString()}`;
         const costTextW = ctx.measureText(costText).width;
 
-        const dotR = 3.5;
-        const gap = 10;
-        const padX = 10;
-        const pillW = padX + dotR * 2 + 6 + labelTextW + gap + costTextW + padX;
+        let pillW = padX + dotR * 2 + 4 + labelTextW + gap + costTextW + padX;
+
+        // If pill too wide, drop cost text
+        let showCost = true;
+        if (pillW > renderW - 8) {
+          pillW = padX + dotR * 2 + 4 + labelTextW + padX;
+          showCost = false;
+        }
 
         let pillX = x;
-        let pillY = y - labelH - 6; // default: above bbox
-        // If pill would be above canvas, place it below the bbox instead
-        if (pillY < 4) {
-          const bboxBottom = entry.bbox.y * scaleY + entry.bbox.h * scaleY;
-          pillY = bboxBottom + 6;
+        let pillY = y - labelH - 4;
+        // Flip below if clipping top
+        if (pillY < offsetY + 2) {
+          const bboxBottom = offsetY + entry.bbox.y * renderH + entry.bbox.h * renderH;
+          pillY = bboxBottom + 4;
         }
-        // Final clamp
-        if (pillY + labelH > canvas.height - 4) {
-          pillY = canvas.height - labelH - 4;
+        // Clamp bottom
+        if (pillY + labelH > offsetY + renderH - 2) {
+          pillY = offsetY + renderH - labelH - 2;
         }
-        // Clamp horizontal
-        if (pillX + pillW > canvas.width - 4) pillX = canvas.width - pillW - 4;
-        if (pillX < 4) pillX = 4;
+        // Clamp horizontal within rendered video area
+        if (pillX + pillW > offsetX + renderW - 2) pillX = offsetX + renderW - pillW - 2;
+        if (pillX < offsetX + 2) pillX = offsetX + 2;
 
-        // Draw pill background
+        // Pill background
         ctx.globalAlpha = opacity * 0.92;
         ctx.fillStyle = "#FFFFFF";
         ctx.beginPath();
         ctx.roundRect(pillX, pillY, pillW, labelH, r);
         ctx.fill();
 
-        // Draw pill border
+        // Pill border
         ctx.strokeStyle = color;
         ctx.lineWidth = 1;
         ctx.globalAlpha = opacity * 0.4;
         ctx.stroke();
 
-        // Draw severity dot
+        // Severity dot
         ctx.globalAlpha = opacity;
         ctx.fillStyle = color;
         ctx.beginPath();
         ctx.arc(pillX + padX + dotR, pillY + labelH / 2, dotR, 0, Math.PI * 2);
         ctx.fill();
 
-        // Draw label text
+        // Label text
         ctx.font = labelFont;
         ctx.fillStyle = "#1C1917";
         ctx.textBaseline = "middle";
-        const labelStartX = pillX + padX + dotR * 2 + 6;
+        const labelStartX = pillX + padX + dotR * 2 + 4;
         ctx.fillText(entry.label, labelStartX, pillY + labelH / 2);
 
-        // Draw cost text
-        ctx.font = costFont;
-        ctx.fillStyle = color;
-        ctx.fillText(costText, labelStartX + labelTextW + gap, pillY + labelH / 2);
+        // Cost text (only if space)
+        if (showCost) {
+          ctx.font = costFont;
+          ctx.fillStyle = color;
+          ctx.fillText(costText, labelStartX + labelTextW + gap, pillY + labelH / 2);
+        }
       }
 
       ctx.globalAlpha = 1;
