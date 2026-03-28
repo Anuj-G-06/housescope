@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Upload, CheckCircle, Home, ArrowLeft } from "lucide-react";
+import { Upload, CheckCircle, Home, ArrowLeft, Building2, Settings } from "lucide-react";
 import { AddressInput } from "@/components/upload/address-input";
 import { extractFrames, extractThumbnail } from "@/lib/frame-extractor";
 import { deduplicateFindings } from "@/lib/deduplication";
@@ -16,8 +16,17 @@ import { NegotiationBrief } from "@/components/report/negotiation-brief";
 import { exportReportPDF, exportDamageTablePDF } from "@/lib/pdf-export";
 import { AnalysisCard } from "@/components/home/analysis-card";
 import { getSavedAnalyses, saveAnalysis, deleteAnalysis } from "@/lib/storage";
+import { saveVideo, getVideo, deleteVideo } from "@/lib/video-storage";
 import { BATCH_SIZE } from "@/lib/constants";
 import type { AppStage, FrameData, Finding, AnalysisResult, SavedAnalysis } from "@/lib/types";
+
+type TabId = "home" | "properties" | "settings";
+
+const tabs: { id: TabId; icon: typeof Home; label: string }[] = [
+  { id: "home", icon: Home, label: "Home" },
+  { id: "properties", icon: Building2, label: "Properties" },
+  { id: "settings", icon: Settings, label: "Settings" },
+];
 
 const fade = (delay: number) => ({
   initial: { opacity: 0, y: 16 },
@@ -27,6 +36,7 @@ const fade = (delay: number) => ({
 
 export default function HomePage() {
   const [stage, setStage] = useState<AppStage>("upload");
+  const [activeTab, setActiveTab] = useState<TabId>("home");
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [address, setAddress] = useState("");
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
@@ -39,6 +49,8 @@ export default function HomePage() {
   const [savedAnalyses, setSavedAnalyses] = useState<SavedAnalysis[]>([]);
   const [thumbnail, setThumbnail] = useState<string>("");
   const [isDragging, setIsDragging] = useState(false);
+  const [loadedVideoUrl, setLoadedVideoUrl] = useState<string | null>(null);
+  const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null);
 
   useEffect(() => {
     setSavedAnalyses(getSavedAnalyses());
@@ -48,6 +60,9 @@ export default function HomePage() {
     if (videoFile && stage === "results") return URL.createObjectURL(videoFile);
     return null;
   }, [videoFile, stage]);
+
+  // The video source: either from current upload or loaded from IndexedDB
+  const activeVideoSrc = videoObjectUrl || loadedVideoUrl;
 
   const handleAnalyze = async () => {
     if (!videoFile) return;
@@ -129,14 +144,18 @@ export default function HomePage() {
     setProgress(100);
     setStage("results");
 
+    // Save analysis + video
+    const id = crypto.randomUUID();
+    setCurrentAnalysisId(id);
     const savedEntry: SavedAnalysis = {
-      id: crypto.randomUUID(),
+      id,
       address,
       date: new Date().toISOString(),
       thumbnail: thumb,
       result,
     };
     saveAnalysis(savedEntry);
+    saveVideo(id, videoFile).catch(console.error);
     setSavedAnalyses(getSavedAnalyses());
   };
 
@@ -146,17 +165,25 @@ export default function HomePage() {
     setAddress("");
     setAnalysisResult(null);
     setLiveFindings([]);
+    setLoadedVideoUrl(null);
+    setCurrentAnalysisId(null);
   };
 
-  const handleSelectAnalysis = (a: SavedAnalysis) => {
+  const handleSelectAnalysis = async (a: SavedAnalysis) => {
     setAnalysisResult(a.result);
     setAddress(a.address);
     setVideoFile(null);
+    setCurrentAnalysisId(a.id);
     setStage("results");
+
+    // Load video from IndexedDB
+    const url = await getVideo(a.id);
+    setLoadedVideoUrl(url);
   };
 
   const handleDeleteAnalysis = (id: string) => {
     deleteAnalysis(id);
+    deleteVideo(id).catch(console.error);
     setSavedAnalyses(getSavedAnalyses());
   };
 
@@ -191,7 +218,6 @@ export default function HomePage() {
   if (stage === "results" && analysisResult) {
     return (
       <main className="min-h-screen bg-[var(--color-background)]">
-        {/* Back header */}
         <div className="sticky top-0 z-40 flex items-center gap-3 px-4 py-3 bg-[var(--color-surface)]/80 backdrop-blur-md border-b border-[var(--color-border)]">
           <button onClick={handleBack} className="p-1 -ml-1 rounded-lg hover:bg-[var(--color-muted)] transition-colors">
             <ArrowLeft size={20} className="text-[var(--color-text-primary)]" />
@@ -205,12 +231,11 @@ export default function HomePage() {
             <p className="text-[var(--color-text-secondary)]">{address}</p>
           </div>
 
-          {videoFile && videoObjectUrl ? (
-            <AnnotatedPlayer videoSrc={videoObjectUrl} manifest={analysisResult.manifest} />
+          {activeVideoSrc ? (
+            <AnnotatedPlayer videoSrc={activeVideoSrc} manifest={analysisResult.manifest} />
           ) : (
             <div className="bg-[var(--color-muted)] rounded-xl p-8 text-center">
-              <p className="text-[var(--color-text-secondary)] text-sm">Video not available for past analyses</p>
-              <p className="text-[var(--color-text-muted)] text-xs mt-1">Upload the video again to view annotated playback</p>
+              <p className="text-[var(--color-text-secondary)] text-sm">Loading video...</p>
             </div>
           )}
 
@@ -265,117 +290,213 @@ export default function HomePage() {
     );
   }
 
-  /* ─── Default: Home — tagline + scan + past analyses ─── */
+  /* ─── Default: Tab-based app shell ─── */
   return (
-    <main className="min-h-screen bg-[var(--color-background)]">
-      {/* ─── Hero / Tagline ─── */}
-      <div className="flex flex-col items-center pt-12 pb-6 px-4">
-        <motion.div {...fade(0)} className="flex items-center gap-2 mb-6">
-          <div className="h-7 w-7 rounded-lg bg-[var(--color-primary)] flex items-center justify-center">
-            <Home size={14} className="text-white" strokeWidth={2.5} />
-          </div>
-          <span className="text-[var(--color-text-primary)] font-bold tracking-tight text-lg">HomeScope</span>
-        </motion.div>
+    <main className="min-h-screen bg-[var(--color-background)] pb-20">
+      {/* ─── Home Tab ─── */}
+      {activeTab === "home" && (
+        <>
+          {/* Hero / Tagline */}
+          <div className="flex flex-col items-center pt-10 pb-4 px-4">
+            <motion.div {...fade(0)} className="flex items-center gap-2 mb-5">
+              <div className="h-7 w-7 rounded-lg bg-[var(--color-primary)] flex items-center justify-center">
+                <Home size={14} className="text-white" strokeWidth={2.5} />
+              </div>
+              <span className="text-[var(--color-text-primary)] font-bold tracking-tight text-lg">HomeScope</span>
+            </motion.div>
 
-        <motion.h1
-          {...fade(0.1)}
-          className="text-center text-3xl sm:text-4xl font-bold tracking-tight leading-tight max-w-lg"
-        >
-          <span className="text-[var(--color-text-primary)]">Know what you&apos;re buying</span>{" "}
-          <span className="text-[var(--color-text-secondary)]">before you offer.</span>
-        </motion.h1>
+            <motion.h1
+              {...fade(0.1)}
+              className="text-center text-2xl sm:text-3xl font-bold tracking-tight leading-tight max-w-md"
+            >
+              <span className="text-[var(--color-text-primary)]">Know what you&apos;re buying</span>{" "}
+              <span className="text-[var(--color-text-secondary)]">before you offer.</span>
+            </motion.h1>
 
-        <motion.p
-          {...fade(0.2)}
-          className="mt-3 text-center text-[var(--color-text-secondary)] text-sm max-w-md"
-        >
-          Upload a walkthrough video. Get an AI inspection in 45 seconds.
-        </motion.p>
-      </div>
-
-      {/* ─── Scan / Upload Card ─── */}
-      <motion.div
-        {...fade(0.3)}
-        className="mx-auto w-full max-w-lg px-4 mb-10"
-      >
-        <div
-          className="bg-white border border-[var(--color-border)] rounded-2xl p-6"
-          style={{ boxShadow: "0 2px 8px rgba(120,100,80,0.08), 0 8px 32px rgba(120,100,80,0.06)" }}
-        >
-          {/* Drop zone */}
-          <div
-            className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${
-              isDragging
-                ? "border-[var(--color-primary)] bg-[var(--color-primary-bg)]"
-                : "border-[var(--color-border)] hover:border-[var(--color-primary)]/50"
-            }`}
-            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={handleDrop}
-            onClick={() => document.getElementById("video-input")?.click()}
-          >
-            {!videoFile ? (
-              <>
-                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-[var(--color-primary-bg)] mb-3">
-                  <Upload className="h-5 w-5 text-[var(--color-primary)]" />
-                </div>
-                <p className="text-sm font-medium text-[var(--color-text-primary)]">Drop walkthrough video</p>
-                <p className="mt-1 text-xs text-[var(--color-text-muted)]">MP4, MOV, or WebM</p>
-              </>
-            ) : (
-              <span className="inline-flex items-center gap-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-full px-4 py-2">
-                <CheckCircle className="h-4 w-4" />
-                {videoFile.name}
-                <button
-                  type="button"
-                  className="ml-1 text-green-500 hover:text-green-700 text-xs"
-                  onClick={(e) => { e.stopPropagation(); setVideoFile(null); }}
-                >
-                  ✕
-                </button>
-              </span>
-            )}
-            <input
-              id="video-input"
-              type="file"
-              accept="video/mp4,video/quicktime,video/webm"
-              className="hidden"
-              onChange={handleFileInput}
-            />
+            <motion.p
+              {...fade(0.15)}
+              className="mt-2 text-center text-[var(--color-text-secondary)] text-sm max-w-sm"
+            >
+              Upload a walkthrough video. AI inspection in 45 seconds.
+            </motion.p>
           </div>
 
-          <div className="mt-4">
-            <AddressInput value={address} onChange={setAddress} />
-          </div>
+          {/* Upload Card */}
+          <motion.div {...fade(0.2)} className="mx-auto w-full max-w-md px-4 mb-8">
+            <div
+              className="bg-white border border-[var(--color-border)] rounded-2xl p-5"
+              style={{ boxShadow: "0 2px 8px rgba(120,100,80,0.08), 0 8px 32px rgba(120,100,80,0.06)" }}
+            >
+              <div
+                className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 text-center transition-colors cursor-pointer ${
+                  isDragging
+                    ? "border-[var(--color-primary)] bg-[var(--color-primary-bg)]"
+                    : "border-[var(--color-border)] hover:border-[var(--color-primary)]/50"
+                }`}
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleDrop}
+                onClick={() => document.getElementById("video-input")?.click()}
+              >
+                {!videoFile ? (
+                  <>
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-[var(--color-primary-bg)] mb-3">
+                      <Upload className="h-5 w-5 text-[var(--color-primary)]" />
+                    </div>
+                    <p className="text-sm font-medium text-[var(--color-text-primary)]">Drop walkthrough video</p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">MP4, MOV, or WebM</p>
+                  </>
+                ) : (
+                  <span className="inline-flex items-center gap-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-full px-4 py-2">
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="truncate max-w-[180px]">{videoFile.name}</span>
+                    <button
+                      type="button"
+                      className="ml-1 text-green-500 hover:text-green-700 text-xs"
+                      onClick={(e) => { e.stopPropagation(); setVideoFile(null); }}
+                    >
+                      ✕
+                    </button>
+                  </span>
+                )}
+                <input
+                  id="video-input"
+                  type="file"
+                  accept="video/mp4,video/quicktime,video/webm"
+                  className="hidden"
+                  onChange={handleFileInput}
+                />
+              </div>
 
-          <button
-            className="mt-4 w-full bg-[var(--color-primary)] text-white font-medium rounded-xl py-3 hover:bg-[var(--color-primary-dark)] transition-colors disabled:opacity-50"
-            disabled={!videoFile || !address}
-            onClick={handleAnalyze}
-          >
-            Analyze Property
-          </button>
-        </div>
-      </motion.div>
+              <div className="mt-4">
+                <AddressInput value={address} onChange={setAddress} />
+              </div>
 
-      {/* ─── Past Analyses ─── */}
-      {savedAnalyses.length > 0 && (
-        <motion.div {...fade(0.4)} className="mx-auto max-w-lg px-4 pb-12">
-          <h2 className="text-sm font-medium text-[var(--color-text-muted)] uppercase tracking-wider mb-4">
-            Your Properties
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {savedAnalyses.map((a) => (
-              <AnalysisCard
-                key={a.id}
-                analysis={a}
-                onSelect={() => handleSelectAnalysis(a)}
-                onDelete={() => handleDeleteAnalysis(a.id)}
-              />
-            ))}
-          </div>
-        </motion.div>
+              <button
+                className="mt-4 w-full bg-[var(--color-primary)] text-white font-medium rounded-xl py-3 hover:bg-[var(--color-primary-dark)] transition-colors disabled:opacity-50"
+                disabled={!videoFile || !address}
+                onClick={handleAnalyze}
+              >
+                Analyze Property
+              </button>
+            </div>
+          </motion.div>
+
+          {/* Recent analyses on home */}
+          {savedAnalyses.length > 0 && (
+            <motion.div {...fade(0.3)} className="mx-auto max-w-md px-4 pb-4">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
+                  Recent
+                </h2>
+                {savedAnalyses.length > 2 && (
+                  <button
+                    onClick={() => setActiveTab("properties")}
+                    className="text-xs text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] font-medium"
+                  >
+                    View all
+                  </button>
+                )}
+              </div>
+              <div className="space-y-3">
+                {savedAnalyses.slice(0, 3).map((a) => (
+                  <AnalysisCard
+                    key={a.id}
+                    analysis={a}
+                    onSelect={() => handleSelectAnalysis(a)}
+                    onDelete={() => handleDeleteAnalysis(a.id)}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </>
       )}
+
+      {/* ─── Properties Tab ─── */}
+      {activeTab === "properties" && (
+        <div className="px-4 pt-6">
+          <h1 className="text-xl font-bold text-[var(--color-text-primary)] mb-1">Your Properties</h1>
+          <p className="text-sm text-[var(--color-text-muted)] mb-6">
+            {savedAnalyses.length} {savedAnalyses.length === 1 ? "analysis" : "analyses"}
+          </p>
+
+          {savedAnalyses.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="w-14 h-14 rounded-full bg-[var(--color-primary-bg)] flex items-center justify-center mb-4">
+                <Building2 size={24} className="text-[var(--color-primary)]" />
+              </div>
+              <p className="text-[var(--color-text-secondary)] font-medium">No properties yet</p>
+              <p className="text-[var(--color-text-muted)] text-sm mt-1">Scan a property to see it here</p>
+              <button
+                onClick={() => setActiveTab("home")}
+                className="mt-4 bg-[var(--color-primary)] text-white rounded-xl px-5 py-2.5 text-sm font-medium hover:bg-[var(--color-primary-dark)] transition-colors"
+              >
+                Start Scanning
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4">
+              {savedAnalyses.map((a) => (
+                <AnalysisCard
+                  key={a.id}
+                  analysis={a}
+                  onSelect={() => handleSelectAnalysis(a)}
+                  onDelete={() => handleDeleteAnalysis(a.id)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─── Settings Tab ─── */}
+      {activeTab === "settings" && (
+        <div className="px-4 pt-6">
+          <h1 className="text-xl font-bold text-[var(--color-text-primary)] mb-6">Settings</h1>
+          <div className="space-y-3">
+            <div className="bg-white border border-[var(--color-border)] rounded-xl p-4">
+              <p className="text-sm font-medium text-[var(--color-text-primary)]">About HomeScope</p>
+              <p className="text-xs text-[var(--color-text-muted)] mt-1">AI-powered home inspection triage</p>
+            </div>
+            <div className="bg-white border border-[var(--color-border)] rounded-xl p-4">
+              <p className="text-sm font-medium text-[var(--color-text-primary)]">Data Storage</p>
+              <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                {savedAnalyses.length} analyses saved locally
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Bottom Tab Bar ─── */}
+      <nav
+        className="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-[var(--color-border)] flex items-center justify-around"
+        style={{ height: "56px", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        {tabs.map(({ id, icon: Icon, label }) => (
+          <button
+            key={id}
+            onClick={() => setActiveTab(id)}
+            className="flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-colors"
+          >
+            <Icon
+              size={22}
+              strokeWidth={activeTab === id ? 2.5 : 1.5}
+              className={activeTab === id ? "text-[var(--color-primary)]" : "text-[var(--color-text-muted)]"}
+            />
+            <span
+              className={`text-[10px] ${
+                activeTab === id
+                  ? "text-[var(--color-primary)] font-semibold"
+                  : "text-[var(--color-text-muted)]"
+              }`}
+            >
+              {label}
+            </span>
+          </button>
+        ))}
+      </nav>
     </main>
   );
 }
