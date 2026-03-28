@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Clock, Zap, FileText, Download } from "lucide-react";
 import AnnotatedPlayer, { type AnnotatedPlayerHandle } from "@/components/AnnotatedPlayer";
 import FindingsSidebar from "@/components/FindingsSidebar";
+import NegotiationModal from "@/components/NegotiationModal";
 import data from "@/data/mock-findings.json";
 import type { Finding } from "@/lib/types";
 
@@ -253,6 +254,7 @@ export default function ResultsPage() {
   const playerRef = useRef<AnnotatedPlayerHandle>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [showLetter, setShowLetter] = useState(false);
 
   const handleFindingActive = useCallback((id: string) => {
     setActiveId(id);
@@ -400,7 +402,10 @@ export default function ResultsPage() {
                 in price reduction or repair credits before signing
               </p>
               <div className="flex items-center gap-3 mt-5">
-                <button className="bg-[#2C7BE5] text-white text-sm font-medium rounded-xl px-5 py-2.5 hover:bg-[#1E6DD4] transition-all hover:shadow-[0_0_20px_rgba(44,123,229,0.4)]">
+                <button
+                  onClick={() => setShowLetter(true)}
+                  className="bg-[#2C7BE5] text-white text-sm font-medium rounded-xl px-5 py-2.5 hover:bg-[#1E6DD4] transition-all hover:shadow-[0_0_20px_rgba(44,123,229,0.4)]"
+                >
                   <span className="flex items-center gap-2">
                     <FileText size={15} />
                     Get Negotiation Letter
@@ -448,6 +453,19 @@ export default function ResultsPage() {
           />
         </div>
       </div>
+
+      {/* Negotiation letter modal */}
+      {showLetter && (
+        <NegotiationModal
+          findings={findings}
+          address={property.address}
+          totalLow={summary.total_cost_low}
+          totalHigh={summary.total_cost_high}
+          askLow={summary.negotiation_ask_low}
+          askHigh={summary.negotiation_ask_high}
+          onClose={() => setShowLetter(false)}
+        />
+      )}
     </div>
   );
 }
