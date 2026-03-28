@@ -225,9 +225,9 @@ export default function HomePage() {
   /* ─── Results: full-screen with view-specific bottom nav ─── */
   if (stage === "results" && analysisResult) {
     return (
-      <main className="flex flex-col bg-[var(--color-background)] overflow-hidden" style={{ height: "100dvh" }}>
-        {/* Top bar */}
-        <div className="flex items-center gap-3 px-4 py-3 bg-[var(--color-surface)]/80 backdrop-blur-md border-b border-[var(--color-border)] shrink-0">
+      <main className="min-h-screen bg-[var(--color-background)]">
+        {/* Top bar — fixed */}
+        <div className="fixed top-0 inset-x-0 z-40 flex items-center gap-3 px-4 py-3 bg-[var(--color-surface)]/80 backdrop-blur-md border-b border-[var(--color-border)]">
           <button onClick={handleBack} className="p-1 -ml-1 rounded-lg hover:bg-[var(--color-muted)] transition-colors">
             <ArrowLeft size={20} className="text-[var(--color-text-primary)]" />
           </button>
@@ -250,17 +250,15 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* View content — fills available space */}
-        <div className="flex-1 overflow-hidden">
+        {/* View content — between fixed top and bottom bars */}
+        <div className="pt-14 pb-14">
           {/* ─── Video View ─── */}
           {resultsView === "video" && (
-            <div className="h-full flex flex-col">
+            <div style={{ height: "calc(100dvh - 56px - 56px)" }}>
               {activeVideoSrc ? (
-                <div className="flex-1 min-h-0">
-                  <AnnotatedPlayer videoSrc={activeVideoSrc} manifest={analysisResult.manifest} />
-                </div>
+                <AnnotatedPlayer videoSrc={activeVideoSrc} manifest={analysisResult.manifest} />
               ) : (
-                <div className="flex-1 flex items-center justify-center">
+                <div className="h-full flex items-center justify-center">
                   <div className="text-center">
                     <Play size={32} className="mx-auto mb-3 text-[var(--color-text-muted)]" />
                     <p className="text-[var(--color-text-secondary)] text-sm">Loading video...</p>
@@ -316,9 +314,9 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Results bottom nav */}
+        {/* Results bottom nav — fixed */}
         <nav
-          className="shrink-0 bg-white border-t border-[var(--color-border)] flex items-center justify-around"
+          className="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-[var(--color-border)] flex items-center justify-around"
           style={{ height: "56px", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         >
           {resultsTabs.map(({ id, icon: Icon, label }) => (
