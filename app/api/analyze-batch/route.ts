@@ -1,4 +1,5 @@
 import { generateText, Output } from "ai";
+import { google } from "@ai-sdk/google";
 import { NextResponse } from "next/server";
 import { SYSTEM_PROMPT, USER_PROMPT_TEMPLATE, batchFindingsSchema } from "@/lib/prompts";
 import { CONFIDENCE_THRESHOLD } from "@/lib/constants";
@@ -11,7 +12,7 @@ export async function POST(request: Request) {
   const { frames, address } = (await request.json()) as BatchRequest;
 
   // Demo mode: return mock findings when no API credentials are configured
-  const isDemo = !process.env.AI_GATEWAY_API_KEY && !process.env.VERCEL_OIDC_TOKEN;
+  const isDemo = !process.env.GOOGLE_GENERATIVE_AI_API_KEY && !process.env.AI_GATEWAY_API_KEY && !process.env.VERCEL_OIDC_TOKEN;
   if (isDemo) {
     await new Promise((r) => setTimeout(r, 1500));
     const batchFindings = mockData.findings
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
   const frameIndices = frames.map((f) => f.index);
 
   const result = await generateText({
-    model: "google/gemini-2.5-flash",
+    model: google("gemini-2.5-flash"),
     system: SYSTEM_PROMPT,
     messages: [
       {
