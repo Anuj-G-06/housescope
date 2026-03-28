@@ -23,9 +23,8 @@ export function RiskScore({ score }: RiskScoreProps) {
           <circle
             cx="50" cy="50" r="42"
             fill="none"
-            stroke="currentColor"
+            stroke="#EDE8E1"
             strokeWidth="8"
-            className="text-muted/20"
           />
           <motion.circle
             cx="50" cy="50" r="42"
@@ -41,14 +40,14 @@ export function RiskScore({ score }: RiskScoreProps) {
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <motion.span
-            className="text-4xl font-bold font-mono"
+            className="text-4xl font-bold font-mono text-[var(--color-text-primary)]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
             {score}
           </motion.span>
-          <span className="text-xs text-muted-foreground uppercase">/ 100</span>
+          <span className="text-xs text-[var(--color-text-muted)] uppercase">/ 100</span>
         </div>
       </div>
       <span className="text-lg font-semibold" style={{ color }}>

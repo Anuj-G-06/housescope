@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import type { AnalysisResult } from "@/lib/types";
 
 interface NegotiationBriefProps {
@@ -32,26 +30,45 @@ Best regards,
 [Your Name]`;
 
   const [letter, setLetter] = useState(defaultLetter);
+  const [showLetter, setShowLetter] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(letter);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Negotiation Letter</h3>
-      <Card className="p-4">
-        <textarea
-          value={letter}
-          onChange={(e) => setLetter(e.target.value)}
-          className="w-full min-h-[300px] bg-transparent resize-none text-sm leading-relaxed focus:outline-none"
-        />
-      </Card>
-      <div className="flex gap-3">
-        <Button onClick={handleCopy} variant="outline">
-          Copy to Clipboard
-        </Button>
-      </div>
+      <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Negotiation Letter</h3>
+
+      {!showLetter ? (
+        <button
+          onClick={() => setShowLetter(true)}
+          className="bg-[var(--color-primary)] text-white rounded-xl px-5 py-2.5 hover:bg-[var(--color-primary-dark)] transition-colors font-medium"
+        >
+          View Negotiation Letter
+        </button>
+      ) : (
+        <>
+          <div className="bg-[var(--color-background)] border border-[var(--color-border)] rounded-xl p-6">
+            <textarea
+              value={letter}
+              onChange={(e) => setLetter(e.target.value)}
+              className="w-full min-h-[300px] bg-transparent text-[var(--color-text-secondary)] text-sm font-mono leading-relaxed resize-none focus:outline-none"
+            />
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={handleCopy}
+              className="bg-[var(--color-primary)] text-white rounded-xl px-5 py-2.5 hover:bg-[var(--color-primary-dark)] transition-colors font-medium text-sm"
+            >
+              {copied ? "Copied!" : "Copy to Clipboard"}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

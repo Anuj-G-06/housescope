@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
-import { Button } from "@/components/ui/button";
 import { CanvasOverlay } from "./canvas-overlay";
 import { FindingsSidebar } from "./findings-sidebar";
 import type { ManifestEntry } from "@/lib/types";
@@ -36,7 +35,7 @@ export function AnnotatedPlayer({ videoSrc, manifest }: AnnotatedPlayerProps) {
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
       {/* Video + Canvas */}
       <div className="space-y-3">
-        <div className="relative rounded-lg overflow-hidden bg-black">
+        <div className="relative bg-black rounded-xl overflow-hidden">
           <video
             ref={videoRef}
             src={videoSrc}
@@ -53,31 +52,29 @@ export function AnnotatedPlayer({ videoSrc, manifest }: AnnotatedPlayerProps) {
 
         {/* Jump to finding nav */}
         <div className="flex items-center justify-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
+          <button
+            className="bg-white border border-[var(--color-border)] rounded-xl px-4 py-2 text-sm hover:bg-[var(--color-primary-bg)] transition-colors disabled:opacity-50 text-[var(--color-text-primary)]"
             onClick={() => jumpToFinding("prev")}
             disabled={currentFindingIdx === 0}
           >
             Prev Finding
-          </Button>
-          <span className="text-sm text-muted-foreground">
+          </button>
+          <span className="text-sm text-[var(--color-text-secondary)]">
             {currentFindingIdx + 1} / {manifest.length}
           </span>
-          <Button
-            variant="outline"
-            size="sm"
+          <button
+            className="bg-white border border-[var(--color-border)] rounded-xl px-4 py-2 text-sm hover:bg-[var(--color-primary-bg)] transition-colors disabled:opacity-50 text-[var(--color-text-primary)]"
             onClick={() => jumpToFinding("next")}
             disabled={currentFindingIdx === manifest.length - 1}
           >
             Next Finding
-          </Button>
+          </button>
         </div>
       </div>
 
       {/* Sidebar */}
       <div>
-        <h3 className="text-sm font-medium mb-3 text-muted-foreground uppercase tracking-wider">
+        <h3 className="text-sm font-medium mb-3 text-[var(--color-text-secondary)] uppercase tracking-wider">
           All Findings ({manifest.length})
         </h3>
         <FindingsSidebar
