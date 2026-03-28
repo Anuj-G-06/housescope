@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
+import { Download } from "lucide-react";
 import { CanvasOverlay } from "./canvas-overlay";
 import { FindingsSidebar } from "./findings-sidebar";
+import { recordAnnotatedVideo } from "@/lib/video-recorder";
 import type { ManifestEntry } from "@/lib/types";
 
 interface AnnotatedPlayerProps {
@@ -14,6 +16,8 @@ export function AnnotatedPlayer({ videoSrc, manifest }: AnnotatedPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [activeIds, setActiveIds] = useState<string[]>([]);
   const [currentFindingIdx, setCurrentFindingIdx] = useState(0);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordProgress, setRecordProgress] = useState(0);
 
   const handleSeek = useCallback((timestamp: number) => {
     if (videoRef.current) {
@@ -21,6 +25,23 @@ export function AnnotatedPlayer({ videoSrc, manifest }: AnnotatedPlayerProps) {
       videoRef.current.play();
     }
   }, []);
+
+  const handleDownloadVideo = async () => {
+    setIsRecording(true);
+    setRecordProgress(0);
+    try {
+      const blob = await recordAnnotatedVideo(videoSrc, manifest, setRecordProgress);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "HomeScope-Annotated-Video.webm";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Recording failed:", err);
+    }
+    setIsRecording(false);
+  };
 
   const jumpToFinding = (direction: "prev" | "next") => {
     const newIdx =
@@ -68,6 +89,14 @@ export function AnnotatedPlayer({ videoSrc, manifest }: AnnotatedPlayerProps) {
             disabled={currentFindingIdx === manifest.length - 1}
           >
             Next Finding
+          </button>
+          <button
+            className="bg-[var(--color-primary)] text-white rounded-xl px-4 py-2 text-sm hover:bg-[var(--color-primary-dark)] transition-colors disabled:opacity-50 flex items-center gap-2"
+            onClick={handleDownloadVideo}
+            disabled={isRecording}
+          >
+            <Download size={14} />
+            {isRecording ? `Recording ${Math.round(recordProgress)}%...` : "Download Video"}
           </button>
         </div>
       </div>
