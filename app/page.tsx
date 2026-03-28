@@ -36,10 +36,72 @@ const resultsTabs: { id: ResultsView; icon: typeof Play; label: string }[] = [
 ];
 
 const fade = (delay: number) => ({
-  initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0 },
+  initial: { opacity: 0, y: 16 } as const,
+  animate: { opacity: 1, y: 0 } as const,
   transition: { duration: 0.5, delay, ease: [0.25, 0.4, 0.25, 1] as const },
 });
+
+/* ─── Reusable sticky shell: header + scrollable body + footer ─── */
+function AppShell({
+  header,
+  footer,
+  children,
+  bodyScroll = true,
+}: {
+  header?: React.ReactNode;
+  footer?: React.ReactNode;
+  children: React.ReactNode;
+  bodyScroll?: boolean;
+}) {
+  return (
+    <div className="flex flex-col" style={{ height: "100dvh" }}>
+      {header && <div className="shrink-0">{header}</div>}
+      <div className={`flex-1 min-h-0 ${bodyScroll ? "overflow-y-auto" : "overflow-hidden"}`}>
+        {children}
+      </div>
+      {footer && <div className="shrink-0">{footer}</div>}
+    </div>
+  );
+}
+
+/* ─── Bottom nav component ─── */
+function BottomNav<T extends string>({
+  items,
+  active,
+  onChange,
+}: {
+  items: { id: T; icon: typeof Home; label: string }[];
+  active: T;
+  onChange: (id: T) => void;
+}) {
+  return (
+    <nav
+      className="bg-white border-t border-[var(--color-border)] flex items-center justify-around"
+      style={{ height: "56px", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+    >
+      {items.map(({ id, icon: Icon, label }) => (
+        <button
+          key={id}
+          onClick={() => onChange(id)}
+          className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors"
+        >
+          <Icon
+            size={22}
+            strokeWidth={active === id ? 2.5 : 1.5}
+            className={active === id ? "text-[var(--color-primary)]" : "text-[var(--color-text-muted)]"}
+          />
+          <span
+            className={`text-[10px] ${
+              active === id ? "text-[var(--color-primary)] font-semibold" : "text-[var(--color-text-muted)]"
+            }`}
+          >
+            {label}
+          </span>
+        </button>
+      ))}
+    </nav>
+  );
+}
 
 export default function HomePage() {
   const [stage, setStage] = useState<AppStage>("upload");
@@ -69,7 +131,6 @@ export default function HomePage() {
     return null;
   }, [videoFile, stage]);
 
-  // The video source: either from current upload or loaded from IndexedDB
   const activeVideoSrc = videoObjectUrl || loadedVideoUrl;
 
   const handleAnalyze = async () => {
@@ -152,7 +213,6 @@ export default function HomePage() {
     setProgress(100);
     setStage("results");
 
-    // Save analysis + video
     const id = crypto.randomUUID();
     setCurrentAnalysisId(id);
     const savedEntry: SavedAnalysis = {
@@ -183,8 +243,6 @@ export default function HomePage() {
     setVideoFile(null);
     setCurrentAnalysisId(a.id);
     setStage("results");
-
-    // Load video from IndexedDB
     const url = await getVideo(a.id);
     setLoadedVideoUrl(url);
   };
@@ -209,7 +267,9 @@ export default function HomePage() {
     if (file) setVideoFile(file);
   }, []);
 
-  /* ─── Processing: full-screen takeover ─── */
+  /* ═══════════════════════════════════════════════
+     Processing — full-screen, no header/footer
+     ═══════════════════════════════════════════════ */
   if (stage === "processing") {
     return (
       <ProcessingScreen
@@ -222,141 +282,108 @@ export default function HomePage() {
     );
   }
 
-  /* ─── Results: full-screen with view-specific bottom nav ─── */
+  /* ═══════════════════════════════════════════════
+     Results — header + body + results tab footer
+     ═══════════════════════════════════════════════ */
   if (stage === "results" && analysisResult) {
     return (
-      <>
-      <main className="min-h-screen bg-[var(--color-background)]">
-        {/* Top bar — fixed */}
-        <div className="fixed top-0 inset-x-0 z-40 flex items-center gap-3 px-4 py-3 bg-[var(--color-surface)]/80 backdrop-blur-md border-b border-[var(--color-border)]">
-          <button onClick={handleBack} className="p-1 -ml-1 rounded-lg hover:bg-[var(--color-muted)] transition-colors">
-            <ArrowLeft size={20} className="text-[var(--color-text-primary)]" />
-          </button>
-          <span className="text-[var(--color-text-primary)] font-semibold text-sm truncate flex-1">{address}</span>
-          <div className="flex gap-1">
-            <button
-              onClick={() => exportReportPDF(analysisResult, address)}
-              className="p-2 rounded-lg hover:bg-[var(--color-muted)] transition-colors"
-              title="Export PDF"
-            >
-              <FileText size={18} className="text-[var(--color-text-secondary)]" />
+      <AppShell
+        bodyScroll={resultsView !== "video"}
+        header={
+          <div className="flex items-center gap-3 px-4 py-3 bg-[var(--color-surface)] border-b border-[var(--color-border)]">
+            <button onClick={handleBack} className="p-1 -ml-1 rounded-lg hover:bg-[var(--color-muted)] transition-colors">
+              <ArrowLeft size={20} className="text-[var(--color-text-primary)]" />
             </button>
-            <button
-              onClick={() => exportDamageTablePDF(analysisResult, address)}
-              className="p-2 rounded-lg hover:bg-[var(--color-muted)] transition-colors"
-              title="Download damage report"
-            >
-              <Download size={18} className="text-[var(--color-text-secondary)]" />
-            </button>
+            <span className="text-[var(--color-text-primary)] font-semibold text-sm truncate flex-1">{address}</span>
+            <div className="flex gap-1">
+              <button
+                onClick={() => exportReportPDF(analysisResult, address)}
+                className="p-2 rounded-lg hover:bg-[var(--color-muted)] transition-colors"
+                title="Export PDF"
+              >
+                <FileText size={18} className="text-[var(--color-text-secondary)]" />
+              </button>
+              <button
+                onClick={() => exportDamageTablePDF(analysisResult, address)}
+                className="p-2 rounded-lg hover:bg-[var(--color-muted)] transition-colors"
+                title="Download damage report"
+              >
+                <Download size={18} className="text-[var(--color-text-secondary)]" />
+              </button>
+            </div>
           </div>
-        </div>
-
-        {/* View content — between fixed top and bottom bars */}
-        <div className="pt-14 pb-14">
-          {/* ─── Video View ─── */}
-          {resultsView === "video" && (
-            <div style={{ height: "calc(100dvh - 56px - 56px)" }}>
-              {activeVideoSrc ? (
-                <AnnotatedPlayer videoSrc={activeVideoSrc} manifest={analysisResult.manifest} />
-              ) : (
-                <div className="h-full flex items-center justify-center">
-                  <div className="text-center">
-                    <Play size={32} className="mx-auto mb-3 text-[var(--color-text-muted)]" />
-                    <p className="text-[var(--color-text-secondary)] text-sm">Loading video...</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ─── Report View ─── */}
-          {resultsView === "report" && (
-            <div className="h-full overflow-y-auto">
-              <div className="mx-auto max-w-2xl px-4 py-6 space-y-6">
-                <div className="flex items-center gap-4">
-                  <RiskScore score={analysisResult.risk_score} />
-                  <div>
-                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">
-                      {analysisResult.manifest.length} Issues Found
-                    </p>
-                    <p className="text-sm text-[var(--color-text-muted)]">
-                      Risk score: {analysisResult.risk_score}/100
-                    </p>
-                  </div>
-                </div>
-
-                <div className="border-t border-[var(--color-border)]" />
-
-                <FindingsReport
-                  manifest={analysisResult.manifest}
-                  onSeek={() => {
-                    setResultsView("video");
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* ─── Costs View ─── */}
-          {resultsView === "costs" && (
-            <div className="h-full overflow-y-auto">
-              <div className="mx-auto max-w-2xl px-4 py-6 space-y-8">
-                <CostBreakdown
-                  manifest={analysisResult.manifest}
-                  totalCostLow={analysisResult.total_cost_low}
-                  totalCostHigh={analysisResult.total_cost_high}
-                />
-
-                <div className="border-t border-[var(--color-border)]" />
-
-                <NegotiationBrief result={analysisResult} address={address} />
-              </div>
-            </div>
-          )}
-        </div>
-
-      </main>
-
-      {/* Results bottom nav — outside <main> to avoid transform containment */}
-      <nav
-        className="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-[var(--color-border)] flex items-center justify-around"
-        style={{ height: "56px", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        }
+        footer={
+          <BottomNav items={resultsTabs} active={resultsView} onChange={setResultsView} />
+        }
       >
-        {resultsTabs.map(({ id, icon: Icon, label }) => (
-          <button
-            key={id}
-            onClick={() => setResultsView(id)}
-            className="flex flex-col items-center justify-center gap-0.5 w-20 h-full transition-colors"
-          >
-            <Icon
-              size={22}
-              strokeWidth={resultsView === id ? 2.5 : 1.5}
-              className={resultsView === id ? "text-[var(--color-primary)]" : "text-[var(--color-text-muted)]"}
+        {/* Video View */}
+        {resultsView === "video" && (
+          <div className="h-full">
+            {activeVideoSrc ? (
+              <AnnotatedPlayer videoSrc={activeVideoSrc} manifest={analysisResult.manifest} />
+            ) : (
+              <div className="h-full flex items-center justify-center">
+                <div className="text-center">
+                  <Play size={32} className="mx-auto mb-3 text-[var(--color-text-muted)]" />
+                  <p className="text-[var(--color-text-secondary)] text-sm">Loading video...</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Report View */}
+        {resultsView === "report" && (
+          <div className="mx-auto max-w-2xl px-4 py-6 space-y-6">
+            <div className="flex items-center gap-4">
+              <RiskScore score={analysisResult.risk_score} />
+              <div>
+                <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                  {analysisResult.manifest.length} Issues Found
+                </p>
+                <p className="text-sm text-[var(--color-text-muted)]">
+                  Risk score: {analysisResult.risk_score}/100
+                </p>
+              </div>
+            </div>
+            <div className="border-t border-[var(--color-border)]" />
+            <FindingsReport
+              manifest={analysisResult.manifest}
+              onSeek={() => setResultsView("video")}
             />
-            <span
-              className={`text-[10px] ${
-                resultsView === id
-                  ? "text-[var(--color-primary)] font-semibold"
-                  : "text-[var(--color-text-muted)]"
-              }`}
-            >
-              {label}
-            </span>
-          </button>
-        ))}
-      </nav>
-      </>
+          </div>
+        )}
+
+        {/* Costs View */}
+        {resultsView === "costs" && (
+          <div className="mx-auto max-w-2xl px-4 py-6 space-y-8">
+            <CostBreakdown
+              manifest={analysisResult.manifest}
+              totalCostLow={analysisResult.total_cost_low}
+              totalCostHigh={analysisResult.total_cost_high}
+            />
+            <div className="border-t border-[var(--color-border)]" />
+            <NegotiationBrief result={analysisResult} address={address} />
+          </div>
+        )}
+      </AppShell>
     );
   }
 
-  /* ─── Default: Tab-based app shell ─── */
+  /* ═══════════════════════════════════════════════
+     Home — header(none) + body + app tab footer
+     ═══════════════════════════════════════════════ */
   return (
-    <>
-    <main className="min-h-screen bg-[var(--color-background)] pb-20">
+    <AppShell
+      footer={
+        <BottomNav items={tabs} active={activeTab} onChange={setActiveTab} />
+      }
+    >
       {/* ─── Home Tab ─── */}
       {activeTab === "home" && (
-        <>
-          {/* Hero / Tagline */}
+        <div className="bg-[var(--color-background)]">
+          {/* Hero */}
           <div className="flex flex-col items-center pt-10 pb-4 px-4">
             <motion.div {...fade(0)} className="flex items-center gap-2 mb-5">
               <div className="h-7 w-7 rounded-lg bg-[var(--color-primary)] flex items-center justify-center">
@@ -442,13 +469,11 @@ export default function HomePage() {
             </div>
           </motion.div>
 
-          {/* Recent analyses on home */}
+          {/* Recent analyses */}
           {savedAnalyses.length > 0 && (
-            <motion.div {...fade(0.3)} className="mx-auto max-w-md px-4 pb-4">
+            <motion.div {...fade(0.3)} className="mx-auto max-w-md px-4 pb-6">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
-                  Recent
-                </h2>
+                <h2 className="text-sm font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Recent</h2>
                 {savedAnalyses.length > 2 && (
                   <button
                     onClick={() => setActiveTab("properties")}
@@ -470,17 +495,16 @@ export default function HomePage() {
               </div>
             </motion.div>
           )}
-        </>
+        </div>
       )}
 
       {/* ─── Properties Tab ─── */}
       {activeTab === "properties" && (
-        <div className="px-4 pt-6">
+        <div className="px-4 pt-6 bg-[var(--color-background)]">
           <h1 className="text-xl font-bold text-[var(--color-text-primary)] mb-1">Your Properties</h1>
           <p className="text-sm text-[var(--color-text-muted)] mb-6">
             {savedAnalyses.length} {savedAnalyses.length === 1 ? "analysis" : "analyses"}
           </p>
-
           {savedAnalyses.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="w-14 h-14 rounded-full bg-[var(--color-primary-bg)] flex items-center justify-center mb-4">
@@ -512,7 +536,7 @@ export default function HomePage() {
 
       {/* ─── Settings Tab ─── */}
       {activeTab === "settings" && (
-        <div className="px-4 pt-6">
+        <div className="px-4 pt-6 bg-[var(--color-background)]">
           <h1 className="text-xl font-bold text-[var(--color-text-primary)] mb-6">Settings</h1>
           <div className="space-y-3">
             <div className="bg-white border border-[var(--color-border)] rounded-xl p-4">
@@ -528,37 +552,6 @@ export default function HomePage() {
           </div>
         </div>
       )}
-
-    </main>
-
-    {/* Bottom Tab Bar — outside <main> so framer-motion transforms don't break fixed positioning */}
-    <nav
-      className="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-[var(--color-border)] flex items-center justify-around"
-      style={{ height: "56px", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-    >
-      {tabs.map(({ id, icon: Icon, label }) => (
-        <button
-          key={id}
-          onClick={() => setActiveTab(id)}
-          className="flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-colors"
-        >
-          <Icon
-            size={22}
-            strokeWidth={activeTab === id ? 2.5 : 1.5}
-            className={activeTab === id ? "text-[var(--color-primary)]" : "text-[var(--color-text-muted)]"}
-          />
-          <span
-            className={`text-[10px] ${
-              activeTab === id
-                ? "text-[var(--color-primary)] font-semibold"
-                : "text-[var(--color-text-muted)]"
-            }`}
-          >
-            {label}
-          </span>
-        </button>
-      ))}
-    </nav>
-    </>
+    </AppShell>
   );
 }
