@@ -82,6 +82,7 @@ function BottomNav<T extends string>({
       {items.map(({ id, icon: Icon, label }) => (
         <button
           key={id}
+          data-tab={id}
           onClick={() => onChange(id)}
           className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors"
         >
