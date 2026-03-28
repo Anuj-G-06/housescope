@@ -54,3 +54,30 @@ export async function extractFrames(
   URL.revokeObjectURL(url);
   return frames;
 }
+
+export async function extractThumbnail(videoFile: File): Promise<string> {
+  const url = URL.createObjectURL(videoFile);
+  const video = document.createElement("video");
+  video.src = url;
+  video.muted = true;
+  video.playsInline = true;
+
+  await new Promise<void>((resolve, reject) => {
+    video.onloadedmetadata = () => resolve();
+    video.onerror = () => reject(new Error("Failed to load video"));
+  });
+
+  video.currentTime = video.duration * 0.25;
+  await new Promise<void>((resolve) => {
+    video.onseeked = () => resolve();
+  });
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 320;
+  canvas.height = Math.round(320 * (video.videoHeight / video.videoWidth));
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  URL.revokeObjectURL(url);
+  return canvas.toDataURL("image/jpeg", 0.6);
+}

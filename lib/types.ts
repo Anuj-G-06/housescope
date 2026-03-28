@@ -54,6 +54,14 @@ export interface AnalysisResult {
   total_cost_high: number;
 }
 
+export interface SavedAnalysis {
+  id: string;
+  address: string;
+  date: string;
+  thumbnail: string;
+  result: AnalysisResult;
+}
+
 export type AppStage = "upload" | "processing" | "results";
 
 export interface FrameData {
