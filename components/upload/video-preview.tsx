@@ -1,12 +1,18 @@
 "use client";
 
+import { useMemo, useEffect } from "react";
+
 interface VideoPreviewProps {
   file: File;
   onRemove: () => void;
 }
 
 export function VideoPreview({ file, onRemove }: VideoPreviewProps) {
-  const url = URL.createObjectURL(file);
+  const url = useMemo(() => URL.createObjectURL(file), [file]);
+
+  useEffect(() => {
+    return () => URL.revokeObjectURL(url);
+  }, [url]);
 
   return (
     <div className="relative rounded-lg overflow-hidden border border-border">
@@ -14,7 +20,6 @@ export function VideoPreview({ file, onRemove }: VideoPreviewProps) {
         src={url}
         controls
         className="w-full max-h-[300px] object-contain bg-black"
-        onLoad={() => URL.revokeObjectURL(url)}
       />
       <div className="flex items-center justify-between p-3 bg-muted/50">
         <div className="text-sm">

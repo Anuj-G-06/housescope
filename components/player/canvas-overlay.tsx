@@ -13,6 +13,7 @@ interface CanvasOverlayProps {
 export function CanvasOverlay({ videoRef, manifest, onActiveFindingsChange }: CanvasOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
+  const prevActiveIdsRef = useRef<string>("");
 
   useEffect(() => {
     const video = videoRef.current;
@@ -83,7 +84,11 @@ export function CanvasOverlay({ videoRef, manifest, onActiveFindingsChange }: Ca
       }
 
       ctx.globalAlpha = 1;
-      onActiveFindingsChange?.(activeIds);
+      const activeKey = activeIds.join(",");
+      if (activeKey !== prevActiveIdsRef.current) {
+        prevActiveIdsRef.current = activeKey;
+        onActiveFindingsChange?.(activeIds);
+      }
       rafRef.current = requestAnimationFrame(render);
     };
 
