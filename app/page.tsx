@@ -225,6 +225,7 @@ export default function HomePage() {
   /* ─── Results: full-screen with view-specific bottom nav ─── */
   if (stage === "results" && analysisResult) {
     return (
+      <>
       <main className="min-h-screen bg-[var(--color-background)]">
         {/* Top bar — fixed */}
         <div className="fixed top-0 inset-x-0 z-40 flex items-center gap-3 px-4 py-3 bg-[var(--color-surface)]/80 backdrop-blur-md border-b border-[var(--color-border)]">
@@ -314,40 +315,43 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Results bottom nav — fixed */}
-        <nav
-          className="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-[var(--color-border)] flex items-center justify-around"
-          style={{ height: "56px", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-        >
-          {resultsTabs.map(({ id, icon: Icon, label }) => (
-            <button
-              key={id}
-              onClick={() => setResultsView(id)}
-              className="flex flex-col items-center justify-center gap-0.5 w-20 h-full transition-colors"
-            >
-              <Icon
-                size={22}
-                strokeWidth={resultsView === id ? 2.5 : 1.5}
-                className={resultsView === id ? "text-[var(--color-primary)]" : "text-[var(--color-text-muted)]"}
-              />
-              <span
-                className={`text-[10px] ${
-                  resultsView === id
-                    ? "text-[var(--color-primary)] font-semibold"
-                    : "text-[var(--color-text-muted)]"
-                }`}
-              >
-                {label}
-              </span>
-            </button>
-          ))}
-        </nav>
       </main>
+
+      {/* Results bottom nav — outside <main> to avoid transform containment */}
+      <nav
+        className="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-[var(--color-border)] flex items-center justify-around"
+        style={{ height: "56px", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        {resultsTabs.map(({ id, icon: Icon, label }) => (
+          <button
+            key={id}
+            onClick={() => setResultsView(id)}
+            className="flex flex-col items-center justify-center gap-0.5 w-20 h-full transition-colors"
+          >
+            <Icon
+              size={22}
+              strokeWidth={resultsView === id ? 2.5 : 1.5}
+              className={resultsView === id ? "text-[var(--color-primary)]" : "text-[var(--color-text-muted)]"}
+            />
+            <span
+              className={`text-[10px] ${
+                resultsView === id
+                  ? "text-[var(--color-primary)] font-semibold"
+                  : "text-[var(--color-text-muted)]"
+              }`}
+            >
+              {label}
+            </span>
+          </button>
+        ))}
+      </nav>
+      </>
     );
   }
 
   /* ─── Default: Tab-based app shell ─── */
   return (
+    <>
     <main className="min-h-screen bg-[var(--color-background)] pb-20">
       {/* ─── Home Tab ─── */}
       {activeTab === "home" && (
@@ -525,34 +529,36 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ─── Bottom Tab Bar ─── */}
-      <nav
-        className="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-[var(--color-border)] flex items-center justify-around"
-        style={{ height: "56px", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-      >
-        {tabs.map(({ id, icon: Icon, label }) => (
-          <button
-            key={id}
-            onClick={() => setActiveTab(id)}
-            className="flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-colors"
-          >
-            <Icon
-              size={22}
-              strokeWidth={activeTab === id ? 2.5 : 1.5}
-              className={activeTab === id ? "text-[var(--color-primary)]" : "text-[var(--color-text-muted)]"}
-            />
-            <span
-              className={`text-[10px] ${
-                activeTab === id
-                  ? "text-[var(--color-primary)] font-semibold"
-                  : "text-[var(--color-text-muted)]"
-              }`}
-            >
-              {label}
-            </span>
-          </button>
-        ))}
-      </nav>
     </main>
+
+    {/* Bottom Tab Bar — outside <main> so framer-motion transforms don't break fixed positioning */}
+    <nav
+      className="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-[var(--color-border)] flex items-center justify-around"
+      style={{ height: "56px", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+    >
+      {tabs.map(({ id, icon: Icon, label }) => (
+        <button
+          key={id}
+          onClick={() => setActiveTab(id)}
+          className="flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-colors"
+        >
+          <Icon
+            size={22}
+            strokeWidth={activeTab === id ? 2.5 : 1.5}
+            className={activeTab === id ? "text-[var(--color-primary)]" : "text-[var(--color-text-muted)]"}
+          />
+          <span
+            className={`text-[10px] ${
+              activeTab === id
+                ? "text-[var(--color-primary)] font-semibold"
+                : "text-[var(--color-text-muted)]"
+            }`}
+          >
+            {label}
+          </span>
+        </button>
+      ))}
+    </nav>
+    </>
   );
 }
