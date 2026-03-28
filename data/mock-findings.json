@@ -1,0 +1,82 @@
+{
+  "property": {
+    "address": "1847 Banksville Rd, Pittsburgh, PA 15216",
+    "type": "Single Family",
+    "year_built": 1962,
+    "sqft": 1840,
+    "analyzed_at": "2026-03-28T14:32:00Z"
+  },
+  "summary": {
+    "overall_risk_score": 74,
+    "risk_label": "Moderate-High",
+    "total_findings": 4,
+    "severity_counts": {
+      "critical": 1,
+      "high": 2,
+      "medium": 1,
+      "low": 0
+    },
+    "total_cost_low": 6150,
+    "total_cost_high": 15800,
+    "negotiation_ask_low": 12000,
+    "negotiation_ask_high": 18000
+  },
+  "findings": [
+    {
+      "id": "f-001",
+      "category": "water_damage",
+      "severity": "critical",
+      "label": "Active Moisture Damage",
+      "description": "Brown ring staining on basement ceiling with visible discoloration pattern consistent with active or recurring roof/plumbing leak. Drywall shows early signs of sagging. Immediate remediation recommended to prevent mold growth and structural compromise.",
+      "timestamp_start": 8,
+      "timestamp_end": 12,
+
+      "repair_cost_low": 4000,
+      "repair_cost_high": 9000,
+      "code_reference": null,
+      "confidence": 0.92
+    },
+    {
+      "id": "f-002",
+      "category": "electrical",
+      "severity": "high",
+      "label": "Double-Tapped Breakers",
+      "description": "Two conductors connected to a single breaker terminal in the main electrical panel. This is a fire hazard — breakers are rated for one conductor unless specifically listed for double-tap. Multiple breakers affected.",
+      "timestamp_start": 22,
+      "timestamp_end": 26,
+
+      "repair_cost_low": 800,
+      "repair_cost_high": 2500,
+      "code_reference": "NEC 110.14(A)",
+      "confidence": 0.87
+    },
+    {
+      "id": "f-003",
+      "category": "foundation",
+      "severity": "high",
+      "label": "Foundation Efflorescence",
+      "description": "White crystalline deposits visible on the interior foundation wall surface, indicating moisture migration through the concrete. Pattern is concentrated along the lower third of the wall, suggesting hydrostatic pressure from exterior grading or failed waterproofing membrane.",
+      "timestamp_start": 41,
+      "timestamp_end": 45,
+
+      "repair_cost_low": 1200,
+      "repair_cost_high": 4000,
+      "code_reference": "IRC R406.1",
+      "confidence": 0.84
+    },
+    {
+      "id": "f-004",
+      "category": "electrical",
+      "severity": "medium",
+      "label": "Missing GFCI Outlet",
+      "description": "Standard duplex outlet located within 6 feet of kitchen sink without ground-fault circuit interrupter protection. All countertop receptacles serving the kitchen must be GFCI-protected per current code.",
+      "timestamp_start": 54,
+      "timestamp_end": 57,
+
+      "repair_cost_low": 150,
+      "repair_cost_high": 300,
+      "code_reference": "NEC 210.8(A)(6)",
+      "confidence": 0.91
+    }
+  ]
+}

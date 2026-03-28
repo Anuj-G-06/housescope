@@ -1,0 +1,84 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: #F7F4EF;
+  --color-foreground: #1C1917;
+  --color-surface: #FDFBF7;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #1C1917;
+  --color-border: #E8E0D5;
+  --color-input: #E8E0D5;
+  --color-ring: #7BB8D4;
+  --color-primary: #7BB8D4;
+  --color-primary-dark: #5A9BB8;
+  --color-primary-light: #A8D4E8;
+  --color-primary-bg: #F0F8FC;
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #F0F8FC;
+  --color-secondary-foreground: #5A9BB8;
+  --color-muted: #EDE8E1;
+  --color-muted-foreground: #A8A29E;
+  --color-accent: #F0F8FC;
+  --color-accent-foreground: #5A9BB8;
+  --color-destructive: #E05252;
+  --color-destructive-foreground: #FFFFFF;
+  --color-popover: #FFFFFF;
+  --color-popover-foreground: #1C1917;
+  --color-text-primary: #1C1917;
+  --color-text-secondary: #78716C;
+  --color-text-muted: #A8A29E;
+  --color-severity-critical: #E05252;
+  --color-severity-high: #D97B3A;
+  --color-severity-medium: #C4A020;
+  --color-severity-low: #5A9BB8;
+  --color-chart-1: #7BB8D4;
+  --color-chart-2: #5A9BB8;
+  --color-chart-3: #D97B3A;
+  --color-chart-4: #C4A020;
+  --color-chart-5: #E05252;
+  --color-sidebar: #FDFBF7;
+  --color-sidebar-foreground: #1C1917;
+  --color-sidebar-primary: #7BB8D4;
+  --color-sidebar-primary-foreground: #FFFFFF;
+  --color-sidebar-accent: #F0F8FC;
+  --color-sidebar-accent-foreground: #5A9BB8;
+  --color-sidebar-border: #E8E0D5;
+  --color-sidebar-ring: #7BB8D4;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #E8E0D5; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #7BB8D4; }
+::selection { background: rgba(123, 184, 212, 0.2); color: #1C1917; }
