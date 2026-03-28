@@ -12,6 +12,9 @@ function drawOverlay(
   width: number,
   height: number,
 ) {
+  // Collect active findings
+  const active: { entry: ManifestEntry; opacity: number }[] = [];
+
   for (const entry of manifest) {
     if (currentTime < entry.timestamp_start || currentTime > entry.timestamp_end) continue;
 
@@ -23,16 +26,27 @@ function drawOverlay(
     } else if (currentTime > fadeOutStart) {
       opacity = smoothstep(Math.max(0, Math.min(1, (entry.timestamp_end - currentTime) / (FINDING_FADE_OUT_MS / 1000))));
     }
+    active.push({ entry, opacity });
+  }
 
-    const x = entry.bbox.x * width;
-    const y = entry.bbox.y * height;
+  if (active.length === 0) return;
+
+  // Subtitle-style: stack pills from bottom up, centered
+  const labelFont = "600 13px Inter, system-ui, sans-serif";
+  const costFont = "700 11px Inter, system-ui, sans-serif";
+  const pillH = 28;
+  const pillGap = 6;
+  const pillR = pillH / 2;
+  const dotR = 3.5;
+  const padX = 10;
+  const innerGap = 8;
+  const bottomMargin = 16;
+
+  let cursorY = height - bottomMargin;
+
+  for (let i = active.length - 1; i >= 0; i--) {
+    const { entry, opacity } = active[i];
     const color = SEVERITY_COLORS[entry.severity];
-
-    // Draw pill label (same as canvas-overlay but on recording canvas)
-    const labelFont = "600 12px Inter, system-ui, sans-serif";
-    const costFont = "700 11px Inter, system-ui, sans-serif";
-    const labelH = 26;
-    const r = labelH / 2;
 
     ctx.font = labelFont;
     const labelTextW = ctx.measureText(entry.label).width;
@@ -40,43 +54,45 @@ function drawOverlay(
     const costText = `$${entry.repair_cost_low.toLocaleString()}\u2013$${entry.repair_cost_high.toLocaleString()}`;
     const costTextW = ctx.measureText(costText).width;
 
-    const dotR = 3.5;
-    const gap = 10;
-    const padX = 10;
-    const pillW = padX + dotR * 2 + 6 + labelTextW + gap + costTextW + padX;
+    const pillW = padX + dotR * 2 + 4 + labelTextW + innerGap + costTextW + padX;
+    const pillX = (width - pillW) / 2;
+    const pillY = cursorY - pillH;
 
-    let pillX = x;
-    let pillY = Math.max(0, y - labelH - 6);
-    if (pillX + pillW > width - 4) pillX = width - pillW - 4;
-    if (pillX < 4) pillX = 4;
+    if (pillY < 4) continue;
 
-    ctx.globalAlpha = opacity * 0.92;
-    ctx.fillStyle = "#FFFFFF";
+    // Dark backdrop pill
+    ctx.globalAlpha = opacity * 0.85;
+    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
     ctx.beginPath();
-    ctx.roundRect(pillX, pillY, pillW, labelH, r);
+    ctx.roundRect(pillX, pillY, pillW, pillH, pillR);
     ctx.fill();
 
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1;
-    ctx.globalAlpha = opacity * 0.4;
-    ctx.stroke();
-
-    ctx.globalAlpha = opacity;
+    // Left color accent
     ctx.fillStyle = color;
+    ctx.globalAlpha = opacity;
     ctx.beginPath();
-    ctx.arc(pillX + padX + dotR, pillY + labelH / 2, dotR, 0, Math.PI * 2);
+    ctx.roundRect(pillX, pillY, 4, pillH, [pillR, 0, 0, pillR]);
     ctx.fill();
 
-    ctx.font = labelFont;
-    ctx.fillStyle = "#1C1917";
-    ctx.textBaseline = "middle";
-    const labelStartX = pillX + padX + dotR * 2 + 6;
-    ctx.fillText(entry.label, labelStartX, pillY + labelH / 2);
+    // Severity dot
+    ctx.beginPath();
+    ctx.arc(pillX + padX + dotR + 2, pillY + pillH / 2, dotR, 0, Math.PI * 2);
+    ctx.fill();
 
+    // Label text
+    ctx.font = labelFont;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textBaseline = "middle";
+    const labelStartX = pillX + padX + dotR * 2 + 8;
+    ctx.fillText(entry.label, labelStartX, pillY + pillH / 2);
+
+    // Cost text
     ctx.font = costFont;
     ctx.fillStyle = color;
-    ctx.fillText(costText, labelStartX + labelTextW + gap, pillY + labelH / 2);
+    ctx.fillText(costText, labelStartX + labelTextW + innerGap, pillY + pillH / 2);
+
     ctx.globalAlpha = 1;
+    cursorY = pillY - pillGap;
   }
 }
 

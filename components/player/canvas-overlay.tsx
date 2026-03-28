@@ -8,38 +8,6 @@ function smoothstep(t: number): number {
   return t * t * (3 - 2 * t);
 }
 
-/**
- * Compute the actual rendered video rect inside a container using object-contain.
- * Returns { offsetX, offsetY, renderW, renderH }.
- */
-function getVideoRect(video: HTMLVideoElement) {
-  const cw = video.clientWidth;
-  const ch = video.clientHeight;
-  const vw = video.videoWidth || cw;
-  const vh = video.videoHeight || ch;
-
-  const containerRatio = cw / ch;
-  const videoRatio = vw / vh;
-
-  let renderW: number, renderH: number, offsetX: number, offsetY: number;
-
-  if (videoRatio > containerRatio) {
-    // Video wider than container — pillarboxed vertically (bars top/bottom)
-    renderW = cw;
-    renderH = cw / videoRatio;
-    offsetX = 0;
-    offsetY = (ch - renderH) / 2;
-  } else {
-    // Video taller than container — letterboxed horizontally (bars left/right)
-    renderH = ch;
-    renderW = ch * videoRatio;
-    offsetX = (cw - renderW) / 2;
-    offsetY = 0;
-  }
-
-  return { offsetX, offsetY, renderW, renderH };
-}
-
 interface CanvasOverlayProps {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   manifest: ManifestEntry[];
@@ -64,104 +32,85 @@ export function CanvasOverlay({ videoRef, manifest, onActiveFindingsChange }: Ca
       canvas.height = video.clientHeight;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Get actual rendered video area (accounts for object-contain letterboxing)
-      const { offsetX, offsetY, renderW, renderH } = getVideoRect(video);
       const activeIds: string[] = [];
+      const activeFindings: { entry: ManifestEntry; opacity: number }[] = [];
 
       for (const entry of manifest) {
-        const isActive = t >= entry.timestamp_start && t <= entry.timestamp_end;
-        if (!isActive) continue;
-
+        if (t < entry.timestamp_start || t > entry.timestamp_end) continue;
         activeIds.push(entry.id);
 
         const fadeInEnd = entry.timestamp_start + FINDING_FADE_IN_MS / 1000;
         const fadeOutStart = entry.timestamp_end - FINDING_FADE_OUT_MS / 1000;
         let opacity = 1;
         if (t < fadeInEnd) {
-          const p = Math.max(0, Math.min(1, (t - entry.timestamp_start) / (FINDING_FADE_IN_MS / 1000)));
-          opacity = smoothstep(p);
+          opacity = smoothstep(Math.max(0, Math.min(1, (t - entry.timestamp_start) / (FINDING_FADE_IN_MS / 1000))));
         } else if (t > fadeOutStart) {
-          const p = Math.max(0, Math.min(1, (entry.timestamp_end - t) / (FINDING_FADE_OUT_MS / 1000)));
-          opacity = smoothstep(p);
+          opacity = smoothstep(Math.max(0, Math.min(1, (entry.timestamp_end - t) / (FINDING_FADE_OUT_MS / 1000))));
         }
+        activeFindings.push({ entry, opacity });
+      }
 
-        // Map normalized coords to actual rendered video area
-        const x = offsetX + entry.bbox.x * renderW;
-        const y = offsetY + entry.bbox.y * renderH;
-        const color = SEVERITY_COLORS[entry.severity];
-
-        // Scale pill size for small screens
-        const scale = Math.min(1, renderW / 350);
-        const labelFont = `600 ${Math.round(12 * scale)}px Inter, system-ui, sans-serif`;
+      if (activeFindings.length > 0) {
+        // Caption-style: stack from bottom, centered, like subtitles
+        const scale = Math.min(1, canvas.width / 350);
+        const font = `600 ${Math.round(13 * scale)}px Inter, system-ui, sans-serif`;
         const costFont = `700 ${Math.round(11 * scale)}px Inter, system-ui, sans-serif`;
-        const labelH = Math.round(24 * scale);
-        const r = labelH / 2;
-        const dotR = Math.round(3 * scale);
-        const gap = Math.round(8 * scale);
-        const padX = Math.round(8 * scale);
+        const lineH = Math.round(30 * scale);
+        const lineGap = Math.round(4 * scale);
+        const padX = Math.round(12 * scale);
+        const dotR = Math.round(4 * scale);
+        const bottomPad = Math.round(48 * scale); // above video controls
 
-        ctx.font = labelFont;
-        const labelTextW = ctx.measureText(entry.label).width;
-        ctx.font = costFont;
-        const costText = `$${entry.repair_cost_low.toLocaleString()}\u2013$${entry.repair_cost_high.toLocaleString()}`;
-        const costTextW = ctx.measureText(costText).width;
+        let cursorY = canvas.height - bottomPad;
 
-        let pillW = padX + dotR * 2 + 4 + labelTextW + gap + costTextW + padX;
+        for (let i = activeFindings.length - 1; i >= 0; i--) {
+          const { entry, opacity } = activeFindings[i];
+          const color = SEVERITY_COLORS[entry.severity];
 
-        // If pill too wide, drop cost text
-        let showCost = true;
-        if (pillW > renderW - 8) {
-          pillW = padX + dotR * 2 + 4 + labelTextW + padX;
-          showCost = false;
-        }
-
-        let pillX = x;
-        let pillY = y - labelH - 4;
-        // Flip below if clipping top
-        if (pillY < offsetY + 2) {
-          const bboxBottom = offsetY + entry.bbox.y * renderH + entry.bbox.h * renderH;
-          pillY = bboxBottom + 4;
-        }
-        // Clamp bottom
-        if (pillY + labelH > offsetY + renderH - 2) {
-          pillY = offsetY + renderH - labelH - 2;
-        }
-        // Clamp horizontal within rendered video area
-        if (pillX + pillW > offsetX + renderW - 2) pillX = offsetX + renderW - pillW - 2;
-        if (pillX < offsetX + 2) pillX = offsetX + 2;
-
-        // Pill background
-        ctx.globalAlpha = opacity * 0.92;
-        ctx.fillStyle = "#FFFFFF";
-        ctx.beginPath();
-        ctx.roundRect(pillX, pillY, pillW, labelH, r);
-        ctx.fill();
-
-        // Pill border
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1;
-        ctx.globalAlpha = opacity * 0.4;
-        ctx.stroke();
-
-        // Severity dot
-        ctx.globalAlpha = opacity;
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(pillX + padX + dotR, pillY + labelH / 2, dotR, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Label text
-        ctx.font = labelFont;
-        ctx.fillStyle = "#1C1917";
-        ctx.textBaseline = "middle";
-        const labelStartX = pillX + padX + dotR * 2 + 4;
-        ctx.fillText(entry.label, labelStartX, pillY + labelH / 2);
-
-        // Cost text (only if space)
-        if (showCost) {
+          // Measure
+          ctx.font = font;
+          const labelW = ctx.measureText(entry.label).width;
           ctx.font = costFont;
+          const costText = `$${entry.repair_cost_low.toLocaleString()}\u2013$${entry.repair_cost_high.toLocaleString()}`;
+          const costW = ctx.measureText(costText).width;
+
+          const innerGap = Math.round(10 * scale);
+          const totalW = padX + dotR * 2 + 6 + labelW + innerGap + costW + padX;
+          const capW = Math.min(totalW, canvas.width - 16);
+          const capX = (canvas.width - capW) / 2;
+          const capY = cursorY - lineH;
+
+          if (capY < 4) continue;
+
+          // Dark backdrop — like a subtitle bar
+          ctx.globalAlpha = opacity * 0.88;
+          ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+          ctx.beginPath();
+          ctx.roundRect(capX, capY, capW, lineH, lineH / 2);
+          ctx.fill();
+
+          // Severity dot
+          ctx.globalAlpha = opacity;
           ctx.fillStyle = color;
-          ctx.fillText(costText, labelStartX + labelTextW + gap, pillY + labelH / 2);
+          ctx.beginPath();
+          ctx.arc(capX + padX + dotR, capY + lineH / 2, dotR, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Label
+          ctx.font = font;
+          ctx.fillStyle = "#FFFFFF";
+          ctx.textBaseline = "middle";
+          const textX = capX + padX + dotR * 2 + 6;
+          ctx.fillText(entry.label, textX, capY + lineH / 2);
+
+          // Cost (if fits)
+          if (totalW <= capW) {
+            ctx.font = costFont;
+            ctx.fillStyle = color;
+            ctx.fillText(costText, textX + labelW + innerGap, capY + lineH / 2);
+          }
+
+          cursorY = capY - lineGap;
         }
       }
 

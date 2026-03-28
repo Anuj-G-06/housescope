@@ -20,10 +20,9 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   safety: "Safety",
 };
 
-export const FRAMES_PER_SECOND = 0.5; // 1 frame every 2 seconds
-export const BATCH_SIZE = 4;
+export const FRAMES_PER_SECOND = 0.25; // 1 frame every 4 seconds
+export const BATCH_SIZE = 6;
 export const FINDING_FADE_IN_MS = 200;
 export const FINDING_FADE_OUT_MS = 300;
 export const FINDING_DISPLAY_DURATION = 4; // seconds each finding shows on video
-export const IOU_MERGE_THRESHOLD = 0.5;
 export const CONFIDENCE_THRESHOLD = 0.75;

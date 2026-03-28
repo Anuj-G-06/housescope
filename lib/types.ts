@@ -10,20 +10,12 @@ export type Category =
   | "plumbing"
   | "safety";
 
-export interface BBox {
-  x: number; // normalized 0-1
-  y: number;
-  w: number;
-  h: number;
-}
-
 export interface Finding {
   id: string;
   category: Category;
   severity: Severity;
   label: string;
   description: string;
-  bbox: BBox;
   repair_cost_low: number;
   repair_cost_high: number;
   code_reference: string | null;
@@ -38,7 +30,6 @@ export interface ManifestEntry {
   severity: Severity;
   label: string;
   description: string;
-  bbox: BBox;
   repair_cost_low: number;
   repair_cost_high: number;
   code_reference: string | null;

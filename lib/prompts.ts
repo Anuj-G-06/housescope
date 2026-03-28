@@ -13,8 +13,6 @@ export const SYSTEM_PROMPT = `You are a licensed home inspector analyzing video 
 
 Rules:
 - Only report findings with confidence >= 0.75
-- Provide bounding box coordinates as normalized fractions (0.0 to 1.0) of the frame dimensions
-- bbox.x and bbox.y are the top-left corner
 - Be conservative — false positives are worse than false negatives
 - Include NEC/IRC code references where applicable
 - Return ONLY valid JSON matching the schema. No prose, no markdown.
@@ -29,7 +27,7 @@ Cost Estimation Rules:
 - Cross-check: if total estimate would exceed $30,000 for a standard single-family home walkthrough, revisit each line item and justify why it cannot be resolved for less`;
 
 export const USER_PROMPT_TEMPLATE = (frameIndices: number[]) =>
-  `Analyze these ${frameIndices.length} video frames (indices: ${frameIndices.join(", ")}) for home inspection defects. For each defect found, provide the frame_index it appears in, a bounding box, severity, category, label, description, repair cost range, and any applicable code reference. Return findings only for defects you can identify with >= 75% confidence.`;
+  `Analyze these ${frameIndices.length} video frames (indices: ${frameIndices.join(", ")}) for home inspection defects. For each defect found, provide the frame_index it appears in, severity, category, label, description, repair cost range, and any applicable code reference. Return findings only for defects you can identify with >= 75% confidence.`;
 
 export const batchFindingsSchema = z.object({
   frame_findings: z.array(
@@ -45,12 +43,6 @@ export const batchFindingsSchema = z.object({
           severity: z.enum(["critical", "high", "medium", "low"]),
           label: z.string(),
           description: z.string(),
-          bbox: z.object({
-            x: z.number().min(0).max(1),
-            y: z.number().min(0).max(1),
-            w: z.number().min(0).max(1),
-            h: z.number().min(0).max(1),
-          }),
           repair_cost_low: z.number(),
           repair_cost_high: z.number(),
           code_reference: z.string().nullable(),

@@ -30,7 +30,7 @@
       "description": "Brown ring staining on basement ceiling with visible discoloration pattern consistent with active or recurring roof/plumbing leak. Drywall shows early signs of sagging. Immediate remediation recommended to prevent mold growth and structural compromise.",
       "timestamp_start": 8,
       "timestamp_end": 12,
-      "bbox": { "x": 0.2, "y": 0.1, "w": 0.4, "h": 0.3 },
+
       "repair_cost_low": 4000,
       "repair_cost_high": 9000,
       "code_reference": null,
@@ -44,7 +44,7 @@
       "description": "Two conductors connected to a single breaker terminal in the main electrical panel. This is a fire hazard — breakers are rated for one conductor unless specifically listed for double-tap. Multiple breakers affected.",
       "timestamp_start": 22,
       "timestamp_end": 26,
-      "bbox": { "x": 0.55, "y": 0.3, "w": 0.3, "h": 0.35 },
+
       "repair_cost_low": 800,
       "repair_cost_high": 2500,
       "code_reference": "NEC 110.14(A)",
@@ -58,7 +58,7 @@
       "description": "White crystalline deposits visible on the interior foundation wall surface, indicating moisture migration through the concrete. Pattern is concentrated along the lower third of the wall, suggesting hydrostatic pressure from exterior grading or failed waterproofing membrane.",
       "timestamp_start": 41,
       "timestamp_end": 45,
-      "bbox": { "x": 0.1, "y": 0.5, "w": 0.5, "h": 0.25 },
+
       "repair_cost_low": 1200,
       "repair_cost_high": 4000,
       "code_reference": "IRC R406.1",
@@ -72,7 +72,7 @@
       "description": "Standard duplex outlet located within 6 feet of kitchen sink without ground-fault circuit interrupter protection. All countertop receptacles serving the kitchen must be GFCI-protected per current code.",
       "timestamp_start": 54,
       "timestamp_end": 57,
-      "bbox": { "x": 0.6, "y": 0.55, "w": 0.15, "h": 0.2 },
+
       "repair_cost_low": 150,
       "repair_cost_high": 300,
       "code_reference": "NEC 210.8(A)(6)",
