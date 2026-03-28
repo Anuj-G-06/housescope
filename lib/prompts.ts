@@ -17,8 +17,16 @@ Rules:
 - bbox.x and bbox.y are the top-left corner
 - Be conservative — false positives are worse than false negatives
 - Include NEC/IRC code references where applicable
-- Repair cost estimates should reflect mid-Atlantic US market (Pittsburgh area)
-- Return ONLY valid JSON matching the schema. No prose, no markdown.`;
+- Return ONLY valid JSON matching the schema. No prose, no markdown.
+
+Cost Estimation Rules:
+- Use national average contractor rates, not worst-case scenarios
+- Minor issues (cosmetic, single outlet, small crack): $50–$500
+- Moderate issues (GFCI, small leak, minor electrical): $200–$2,000
+- Major issues (roof, foundation, HVAC, structural): $2,000–$15,000
+- Do NOT stack worst-case estimates — assume standard repair, not full replacement
+- If uncertain, bias LOW not high
+- Cross-check: if total estimate would exceed $30,000 for a standard single-family home walkthrough, revisit each line item and justify why it cannot be resolved for less`;
 
 export const USER_PROMPT_TEMPLATE = (frameIndices: number[]) =>
   `Analyze these ${frameIndices.length} video frames (indices: ${frameIndices.join(", ")}) for home inspection defects. For each defect found, provide the frame_index it appears in, a bounding box, severity, category, label, description, repair cost range, and any applicable code reference. Return findings only for defects you can identify with >= 75% confidence.`;

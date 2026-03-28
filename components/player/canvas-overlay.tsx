@@ -4,42 +4,6 @@ import { useEffect, useRef } from "react";
 import { SEVERITY_COLORS, FINDING_FADE_IN_MS, FINDING_FADE_OUT_MS } from "@/lib/constants";
 import type { ManifestEntry } from "@/lib/types";
 
-/* ── Corner-accent constants ── */
-const CORNER_LEN = 16;
-const CORNER_W = 3;
-
-function drawCornerAccents(
-  ctx: CanvasRenderingContext2D,
-  x: number, y: number, w: number, h: number,
-  color: string, alpha: number,
-) {
-  ctx.save();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = CORNER_W;
-  ctx.globalAlpha = alpha;
-  ctx.lineCap = "square";
-  const cl = Math.min(CORNER_LEN, w / 3, h / 3);
-
-  // Top-left
-  ctx.beginPath();
-  ctx.moveTo(x, y + cl); ctx.lineTo(x, y); ctx.lineTo(x + cl, y);
-  ctx.stroke();
-  // Top-right
-  ctx.beginPath();
-  ctx.moveTo(x + w - cl, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + cl);
-  ctx.stroke();
-  // Bottom-right
-  ctx.beginPath();
-  ctx.moveTo(x + w, y + h - cl); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w - cl, y + h);
-  ctx.stroke();
-  // Bottom-left
-  ctx.beginPath();
-  ctx.moveTo(x + cl, y + h); ctx.lineTo(x, y + h); ctx.lineTo(x, y + h - cl);
-  ctx.stroke();
-
-  ctx.restore();
-}
-
 function smoothstep(t: number): number {
   return t * t * (3 - 2 * t);
 }
@@ -94,12 +58,7 @@ export function CanvasOverlay({ videoRef, manifest, onActiveFindingsChange }: Ca
 
         const x = entry.bbox.x * scaleX;
         const y = entry.bbox.y * scaleY;
-        const w = entry.bbox.w * scaleX;
-        const h = entry.bbox.h * scaleY;
         const color = SEVERITY_COLORS[entry.severity];
-
-        // Draw corner-accent bounding box
-        drawCornerAccents(ctx, x, y, w, h, color, opacity);
 
         // Draw pill-shaped label card
         const labelFont = "600 12px Inter, system-ui, sans-serif";
