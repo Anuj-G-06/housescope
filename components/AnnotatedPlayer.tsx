@@ -5,10 +5,16 @@ import {
   useState,
   useEffect,
   useCallback,
+  useImperativeHandle,
+  forwardRef,
   type MouseEvent,
 } from "react";
 import { Maximize, Minimize, Pause, Play, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Finding } from "@/lib/types";
+
+export interface AnnotatedPlayerHandle {
+  seekTo: (time: number) => void;
+}
 
 const SEVERITY_COLOR: Record<string, string> = {
   critical: "#F43F5E",
@@ -173,7 +179,10 @@ interface Props {
   onFindingActive?: (id: string) => void;
 }
 
-export default function AnnotatedPlayer({ videoUrl, findings, onFindingActive }: Props) {
+const AnnotatedPlayer = forwardRef<AnnotatedPlayerHandle, Props>(function AnnotatedPlayer(
+  { videoUrl, findings, onFindingActive },
+  ref,
+) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -191,6 +200,15 @@ export default function AnnotatedPlayer({ videoUrl, findings, onFindingActive }:
   const sortedFindings = [...findings].sort(
     (a, b) => a.timestamp_start - b.timestamp_start,
   );
+
+  const seekTo = useCallback((time: number) => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.currentTime = time;
+    setCurrentTime(time);
+  }, []);
+
+  useImperativeHandle(ref, () => ({ seekTo }), [seekTo]);
 
   // Resize observer to sync canvas with video display dimensions
   useEffect(() => {
@@ -289,13 +307,6 @@ export default function AnnotatedPlayer({ videoUrl, findings, onFindingActive }:
       v.pause();
       setPlaying(false);
     }
-  }, []);
-
-  const seekTo = useCallback((time: number) => {
-    const v = videoRef.current;
-    if (!v) return;
-    v.currentTime = time;
-    setCurrentTime(time);
   }, []);
 
   const toggleFullscreen = useCallback(() => {
@@ -502,4 +513,6 @@ export default function AnnotatedPlayer({ videoUrl, findings, onFindingActive }:
       </div>
     </div>
   );
-}
+});
+
+export default AnnotatedPlayer;
