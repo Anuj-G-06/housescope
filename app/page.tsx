@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Upload, CheckCircle, Home, ArrowLeft, Building2, Settings } from "lucide-react";
+import { Upload, CheckCircle, Home, ArrowLeft, Building2, Settings, Play, ClipboardList, DollarSign, Download, FileText } from "lucide-react";
 import { AddressInput } from "@/components/upload/address-input";
 import { extractFrames, extractThumbnail } from "@/lib/frame-extractor";
 import { deduplicateFindings } from "@/lib/deduplication";
@@ -21,11 +21,18 @@ import { BATCH_SIZE } from "@/lib/constants";
 import type { AppStage, FrameData, Finding, AnalysisResult, SavedAnalysis } from "@/lib/types";
 
 type TabId = "home" | "properties" | "settings";
+type ResultsView = "video" | "report" | "costs";
 
 const tabs: { id: TabId; icon: typeof Home; label: string }[] = [
   { id: "home", icon: Home, label: "Home" },
   { id: "properties", icon: Building2, label: "Properties" },
   { id: "settings", icon: Settings, label: "Settings" },
+];
+
+const resultsTabs: { id: ResultsView; icon: typeof Play; label: string }[] = [
+  { id: "video", icon: Play, label: "Video" },
+  { id: "report", icon: ClipboardList, label: "Report" },
+  { id: "costs", icon: DollarSign, label: "Costs" },
 ];
 
 const fade = (delay: number) => ({
@@ -51,6 +58,7 @@ export default function HomePage() {
   const [isDragging, setIsDragging] = useState(false);
   const [loadedVideoUrl, setLoadedVideoUrl] = useState<string | null>(null);
   const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null);
+  const [resultsView, setResultsView] = useState<ResultsView>("video");
 
   useEffect(() => {
     setSavedAnalyses(getSavedAnalyses());
@@ -214,78 +222,128 @@ export default function HomePage() {
     );
   }
 
-  /* ─── Results: full-screen with back button ─── */
+  /* ─── Results: full-screen with view-specific bottom nav ─── */
   if (stage === "results" && analysisResult) {
     return (
-      <main className="min-h-screen bg-[var(--color-background)]">
-        <div className="sticky top-0 z-40 flex items-center gap-3 px-4 py-3 bg-[var(--color-surface)]/80 backdrop-blur-md border-b border-[var(--color-border)]">
+      <main className="flex flex-col h-screen bg-[var(--color-background)] overflow-hidden">
+        {/* Top bar */}
+        <div className="flex items-center gap-3 px-4 py-3 bg-[var(--color-surface)]/80 backdrop-blur-md border-b border-[var(--color-border)] shrink-0">
           <button onClick={handleBack} className="p-1 -ml-1 rounded-lg hover:bg-[var(--color-muted)] transition-colors">
             <ArrowLeft size={20} className="text-[var(--color-text-primary)]" />
           </button>
-          <span className="text-[var(--color-text-primary)] font-semibold text-sm truncate">{address}</span>
+          <span className="text-[var(--color-text-primary)] font-semibold text-sm truncate flex-1">{address}</span>
+          <div className="flex gap-1">
+            <button
+              onClick={() => exportReportPDF(analysisResult, address)}
+              className="p-2 rounded-lg hover:bg-[var(--color-muted)] transition-colors"
+              title="Export PDF"
+            >
+              <FileText size={18} className="text-[var(--color-text-secondary)]" />
+            </button>
+            <button
+              onClick={() => exportDamageTablePDF(analysisResult, address)}
+              className="p-2 rounded-lg hover:bg-[var(--color-muted)] transition-colors"
+              title="Download damage report"
+            >
+              <Download size={18} className="text-[var(--color-text-secondary)]" />
+            </button>
+          </div>
         </div>
 
-        <div className="mx-auto max-w-5xl px-4 pt-6 pb-16 space-y-10">
-          <div className="text-center space-y-1">
-            <h2 className="text-3xl font-bold text-[var(--color-text-primary)]">Inspection Results</h2>
-            <p className="text-[var(--color-text-secondary)]">{address}</p>
-          </div>
-
-          {activeVideoSrc ? (
-            <AnnotatedPlayer videoSrc={activeVideoSrc} manifest={analysisResult.manifest} />
-          ) : (
-            <div className="bg-[var(--color-muted)] rounded-xl p-8 text-center">
-              <p className="text-[var(--color-text-secondary)] text-sm">Loading video...</p>
+        {/* View content — fills available space */}
+        <div className="flex-1 overflow-hidden">
+          {/* ─── Video View ─── */}
+          {resultsView === "video" && (
+            <div className="h-full flex flex-col">
+              {activeVideoSrc ? (
+                <div className="flex-1 min-h-0">
+                  <AnnotatedPlayer videoSrc={activeVideoSrc} manifest={analysisResult.manifest} />
+                </div>
+              ) : (
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="text-center">
+                    <Play size={32} className="mx-auto mb-3 text-[var(--color-text-muted)]" />
+                    <p className="text-[var(--color-text-secondary)] text-sm">Loading video...</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          <div className="border-t border-[var(--color-border)]" />
+          {/* ─── Report View ─── */}
+          {resultsView === "report" && (
+            <div className="h-full overflow-y-auto">
+              <div className="mx-auto max-w-2xl px-4 py-6 space-y-6">
+                <div className="flex items-center gap-4">
+                  <RiskScore score={analysisResult.risk_score} />
+                  <div>
+                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                      {analysisResult.manifest.length} Issues Found
+                    </p>
+                    <p className="text-sm text-[var(--color-text-muted)]">
+                      Risk score: {analysisResult.risk_score}/100
+                    </p>
+                  </div>
+                </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-8">
-            <RiskScore score={analysisResult.risk_score} />
-            <CostBreakdown
-              manifest={analysisResult.manifest}
-              totalCostLow={analysisResult.total_cost_low}
-              totalCostHigh={analysisResult.total_cost_high}
-            />
-          </div>
+                <div className="border-t border-[var(--color-border)]" />
 
-          <div className="border-t border-[var(--color-border)]" />
+                <FindingsReport
+                  manifest={analysisResult.manifest}
+                  onSeek={() => {
+                    setResultsView("video");
+                  }}
+                />
+              </div>
+            </div>
+          )}
 
-          <FindingsReport
-            manifest={analysisResult.manifest}
-            onSeek={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          />
+          {/* ─── Costs View ─── */}
+          {resultsView === "costs" && (
+            <div className="h-full overflow-y-auto">
+              <div className="mx-auto max-w-2xl px-4 py-6 space-y-8">
+                <CostBreakdown
+                  manifest={analysisResult.manifest}
+                  totalCostLow={analysisResult.total_cost_low}
+                  totalCostHigh={analysisResult.total_cost_high}
+                />
 
-          <div className="border-t border-[var(--color-border)]" />
+                <div className="border-t border-[var(--color-border)]" />
 
-          <NegotiationBrief result={analysisResult} address={address} />
-
-          <div className="border-t border-[var(--color-border)]" />
-
-          <div className="flex flex-wrap gap-3 justify-center pb-8">
-            <button
-              className="bg-white border border-[var(--color-border)] rounded-xl px-5 py-2.5 text-sm font-medium hover:bg-[var(--color-primary-bg)] transition-colors text-[var(--color-text-primary)]"
-              onClick={() => exportReportPDF(analysisResult, address)}
-            >
-              Export PDF Report
-            </button>
-            <button
-              className="bg-white border border-[var(--color-border)] rounded-xl px-5 py-2.5 text-sm font-medium hover:bg-[var(--color-primary-bg)] transition-colors text-[var(--color-text-primary)]"
-              onClick={() => exportDamageTablePDF(analysisResult, address)}
-            >
-              Download Damage Report
-            </button>
-            {videoUrl && (
-              <button
-                className="bg-white border border-[var(--color-border)] rounded-xl px-5 py-2.5 text-sm font-medium hover:bg-[var(--color-primary-bg)] transition-colors text-[var(--color-text-primary)]"
-                onClick={() => navigator.clipboard.writeText(videoUrl)}
-              >
-                Copy Video Link
-              </button>
-            )}
-          </div>
+                <NegotiationBrief result={analysisResult} address={address} />
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* Results bottom nav */}
+        <nav
+          className="shrink-0 bg-white border-t border-[var(--color-border)] flex items-center justify-around"
+          style={{ height: "56px", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        >
+          {resultsTabs.map(({ id, icon: Icon, label }) => (
+            <button
+              key={id}
+              onClick={() => setResultsView(id)}
+              className="flex flex-col items-center justify-center gap-0.5 w-20 h-full transition-colors"
+            >
+              <Icon
+                size={22}
+                strokeWidth={resultsView === id ? 2.5 : 1.5}
+                className={resultsView === id ? "text-[var(--color-primary)]" : "text-[var(--color-text-muted)]"}
+              />
+              <span
+                className={`text-[10px] ${
+                  resultsView === id
+                    ? "text-[var(--color-primary)] font-semibold"
+                    : "text-[var(--color-text-muted)]"
+                }`}
+              >
+                {label}
+              </span>
+            </button>
+          ))}
+        </nav>
       </main>
     );
   }
