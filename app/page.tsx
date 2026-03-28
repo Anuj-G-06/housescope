@@ -3,7 +3,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Upload, CheckCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { AddressInput } from "@/components/upload/address-input";
 import { extractFrames } from "@/lib/frame-extractor";
 import { deduplicateFindings } from "@/lib/deduplication";
@@ -14,7 +13,6 @@ import { RiskScore } from "@/components/report/risk-score";
 import { FindingsReport } from "@/components/report/findings-report";
 import { CostBreakdown } from "@/components/report/cost-breakdown";
 import { NegotiationBrief } from "@/components/report/negotiation-brief";
-import { Separator } from "@/components/ui/separator";
 import { exportReportPDF } from "@/lib/pdf-export";
 import { BATCH_SIZE } from "@/lib/constants";
 import type { AppStage, FrameData, Finding, AnalysisResult } from "@/lib/types";
@@ -258,8 +256,8 @@ export default function Home() {
       {stage === "results" && analysisResult && videoFile && (
         <div className="mx-auto max-w-5xl px-4 pt-20 pb-8 space-y-10">
           <div className="text-center space-y-1">
-            <h2 className="text-3xl font-bold">Inspection Results</h2>
-            <p className="text-muted-foreground">{address}</p>
+            <h2 className="text-3xl font-bold text-[var(--color-text-primary)]">Inspection Results</h2>
+            <p className="text-[var(--color-text-secondary)]">{address}</p>
           </div>
 
           <AnnotatedPlayer
@@ -267,7 +265,7 @@ export default function Home() {
             manifest={analysisResult.manifest}
           />
 
-          <Separator />
+          <div className="border-t border-[var(--color-border)]" />
 
           <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-8">
             <RiskScore score={analysisResult.risk_score} />
@@ -278,7 +276,7 @@ export default function Home() {
             />
           </div>
 
-          <Separator />
+          <div className="border-t border-[var(--color-border)]" />
 
           <FindingsReport
             manifest={analysisResult.manifest}
@@ -287,36 +285,39 @@ export default function Home() {
             }}
           />
 
-          <Separator />
+          <div className="border-t border-[var(--color-border)]" />
 
           <NegotiationBrief result={analysisResult} address={address} />
 
-          <Separator />
+          <div className="border-t border-[var(--color-border)]" />
 
           <div className="flex gap-3 justify-center pb-12">
-            <Button
-              variant="outline"
+            <button
+              className="bg-white border border-[var(--color-border)] rounded-xl px-5 py-2.5 text-sm font-medium hover:bg-[var(--color-primary-bg)] transition-colors text-[var(--color-text-primary)]"
               onClick={() => exportReportPDF(analysisResult, address)}
             >
               Export PDF Report
-            </Button>
+            </button>
             {videoUrl && (
-              <Button
-                variant="outline"
+              <button
+                className="bg-white border border-[var(--color-border)] rounded-xl px-5 py-2.5 text-sm font-medium hover:bg-[var(--color-primary-bg)] transition-colors text-[var(--color-text-primary)]"
                 onClick={() => navigator.clipboard.writeText(videoUrl)}
               >
                 Copy Shareable Video Link
-              </Button>
+              </button>
             )}
-            <Button variant="ghost" onClick={() => {
-              setStage("upload");
-              setVideoFile(null);
-              setAddress("");
-              setAnalysisResult(null);
-              setLiveFindings([]);
-            }}>
+            <button
+              className="rounded-xl px-5 py-2.5 text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-primary-bg)] transition-colors"
+              onClick={() => {
+                setStage("upload");
+                setVideoFile(null);
+                setAddress("");
+                setAnalysisResult(null);
+                setLiveFindings([]);
+              }}
+            >
               Analyze Another Property
-            </Button>
+            </button>
           </div>
         </div>
       )}

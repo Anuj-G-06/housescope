@@ -1,6 +1,5 @@
 "use client";
 
-import { Separator } from "@/components/ui/separator";
 import { CATEGORY_LABELS } from "@/lib/constants";
 import type { Category, ManifestEntry } from "@/lib/types";
 
@@ -27,37 +26,37 @@ export function CostBreakdown({ manifest, totalCostLow, totalCostHigh }: CostBre
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Estimated Repair Costs</h3>
+      <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Estimated Repair Costs</h3>
 
       <div className="space-y-2">
         {Object.entries(byCategory).map(([cat, costs]) => (
           <div key={cat} className="flex justify-between text-sm">
-            <span>
+            <span className="text-[var(--color-text-primary)]">
               {CATEGORY_LABELS[cat as Category]}{" "}
-              <span className="text-muted-foreground">({costs.count})</span>
+              <span className="text-[var(--color-text-muted)]">({costs.count})</span>
             </span>
-            <span className="font-mono">
+            <span className="font-mono text-[var(--color-text-primary)]">
               ${costs.low.toLocaleString()} – ${costs.high.toLocaleString()}
             </span>
           </div>
         ))}
       </div>
 
-      <Separator />
+      <div className="border-t border-[var(--color-border)]" />
 
-      <div className="flex justify-between font-semibold">
+      <div className="flex justify-between font-semibold text-[var(--color-text-primary)]">
         <span>Total Estimated Range</span>
         <span className="font-mono">
           ${totalCostLow.toLocaleString()} – ${totalCostHigh.toLocaleString()}
         </span>
       </div>
 
-      <div className="rounded-lg bg-primary/10 border border-primary/20 p-4 mt-4">
-        <p className="text-sm font-medium text-primary">Negotiation Recommendation</p>
-        <p className="text-2xl font-bold mt-1">
+      <div className="bg-[var(--color-primary-bg)] border border-[var(--color-primary)]/20 rounded-xl p-4 mt-4">
+        <p className="text-sm font-medium text-[var(--color-primary-dark)]">Negotiation Recommendation</p>
+        <p className="text-2xl font-bold mt-1 text-[var(--color-text-primary)]">
           Request ${negotiationLow.toLocaleString()} – ${negotiationHigh.toLocaleString()}
         </p>
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-xs text-[var(--color-text-muted)] mt-1">
           Based on 70–85% of estimated repair costs — standard negotiation range
         </p>
       </div>

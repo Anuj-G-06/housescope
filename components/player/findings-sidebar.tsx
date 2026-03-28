@@ -1,7 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { SEVERITY_COLORS, CATEGORY_LABELS } from "@/lib/constants";
 import type { ManifestEntry } from "@/lib/types";
 
@@ -13,16 +11,16 @@ interface FindingsSidebarProps {
 
 export function FindingsSidebar({ manifest, activeIds, onSeek }: FindingsSidebarProps) {
   return (
-    <ScrollArea className="h-[400px]">
+    <div className="overflow-y-auto max-h-[400px]">
       <div className="space-y-2 p-1">
         {manifest.map((entry) => (
           <button
             key={entry.id}
             onClick={() => onSeek(entry.timestamp_start)}
-            className={`w-full text-left rounded-lg border p-3 transition-colors hover:bg-accent ${
+            className={`w-full text-left rounded-xl border p-3 transition-colors bg-white hover:bg-[var(--color-primary-bg)]/50 ${
               activeIds.includes(entry.id)
-                ? "border-primary bg-accent"
-                : "border-border"
+                ? "border-[var(--color-primary)] bg-[var(--color-primary-bg)]"
+                : "border-[var(--color-border)]"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -30,12 +28,12 @@ export function FindingsSidebar({ manifest, activeIds, onSeek }: FindingsSidebar
                 className="h-2.5 w-2.5 rounded-full shrink-0"
                 style={{ backgroundColor: SEVERITY_COLORS[entry.severity] }}
               />
-              <span className="font-medium text-sm">{entry.label}</span>
+              <span className="font-medium text-sm text-[var(--color-text-primary)]">{entry.label}</span>
             </div>
-            <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-              <Badge variant="outline" className="text-[10px]">
+            <div className="mt-1 flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
+              <span className="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text-secondary)]">
                 {CATEGORY_LABELS[entry.category]}
-              </Badge>
+              </span>
               <span>
                 {formatTimestamp(entry.timestamp_start)}
               </span>
@@ -46,7 +44,7 @@ export function FindingsSidebar({ manifest, activeIds, onSeek }: FindingsSidebar
           </button>
         ))}
       </div>
-    </ScrollArea>
+    </div>
   );
 }
 
