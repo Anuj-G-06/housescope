@@ -1,10 +1,10 @@
 import { type Severity, type Category } from "./types";
 
 export const SEVERITY_COLORS: Record<Severity, string> = {
-  critical: "#ef4444", // red-500
-  high: "#f97316",     // orange-500
-  medium: "#eab308",   // yellow-500
-  low: "#3b82f6",      // blue-500
+  critical: "#E05252",
+  high: "#D97B3A",
+  medium: "#C4A020",
+  low: "#5A9BB8",
 };
 
 export const SEVERITY_ORDER: Severity[] = ["critical", "high", "medium", "low"];
