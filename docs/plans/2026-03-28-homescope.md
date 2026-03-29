@@ -1,4 +1,4 @@
-# HomeScope Implementation Plan
+# HouseScope Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
@@ -117,7 +117,7 @@ import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "HomeScope — AI Home Inspection",
+  title: "HouseScope — AI Home Inspection",
   description: "Upload a walkthrough video. Get an annotated inspection report in 45 seconds.",
 };
 
@@ -140,7 +140,7 @@ Edit `app/page.tsx`:
 export default function Home() {
   return (
     <main className="min-h-screen flex items-center justify-center">
-      <h1 className="text-4xl font-bold">HomeScope</h1>
+      <h1 className="text-4xl font-bold">HouseScope</h1>
     </main>
   );
 }
@@ -149,7 +149,7 @@ export default function Home() {
 **Step 8: Verify dev server starts**
 
 Run: `npm run dev`
-Expected: App loads at localhost:3000 with "HomeScope" heading.
+Expected: App loads at localhost:3000 with "HouseScope" heading.
 
 **Step 9: Install Geist font package**
 
@@ -579,7 +579,7 @@ export default function Home() {
       {stage === "upload" && (
         <div className="mx-auto max-w-2xl px-4 py-16 space-y-8">
           <div className="text-center space-y-2">
-            <h1 className="text-4xl font-bold tracking-tight">HomeScope</h1>
+            <h1 className="text-4xl font-bold tracking-tight">HouseScope</h1>
             <p className="text-muted-foreground text-lg">
               Upload a walkthrough video. Get an AI inspection in 45 seconds.
             </p>
@@ -655,7 +655,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No video file" }, { status: 400 });
   }
 
-  const blob = await put(`homescope/${Date.now()}-${file.name}`, file, {
+  const blob = await put(`housescope/${Date.now()}-${file.name}`, file, {
     access: "public",
   });
 
@@ -1924,7 +1924,7 @@ export function exportReportPDF(result: AnalysisResult, address: string) {
 
   // Header
   doc.setFontSize(22);
-  doc.text("HomeScope Inspection Report", 20, y);
+  doc.text("HouseScope Inspection Report", 20, y);
   y += 10;
   doc.setFontSize(11);
   doc.setTextColor(100);
@@ -1994,7 +1994,7 @@ export function exportReportPDF(result: AnalysisResult, address: string) {
     { maxWidth: 170 }
   );
 
-  doc.save(`HomeScope-Report-${Date.now()}.pdf`);
+  doc.save(`HouseScope-Report-${Date.now()}.pdf`);
 }
 ```
 
@@ -2090,7 +2090,7 @@ Add a sticky header to `app/page.tsx`:
 ```tsx
 <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-sm">
   <div className="mx-auto max-w-5xl flex items-center justify-between px-4 h-14">
-    <span className="text-lg font-bold tracking-tight">HomeScope</span>
+    <span className="text-lg font-bold tracking-tight">HouseScope</span>
     {stage !== "upload" && (
       <span className="text-sm text-muted-foreground">{address}</span>
     )}

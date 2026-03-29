@@ -16,7 +16,7 @@ interface SavedAnalysis {
 }
 ```
 
-- Key: `"homescope:analyses"`
+- Key: `"housescope:analyses"`
 - Thumbnail extracted during frame extraction (frame 0)
 - Video file NOT persisted (too large) — user re-uploads for overlay playback
 - Max 20 analyses, auto-evict oldest
@@ -43,4 +43,4 @@ Three icon-only tabs (lucide-react), fixed bottom, 56px:
 - Tap → loads analysis into results view
 - Swipe left or long-press to delete
 - Empty state: scan icon + "Scan your first property"
-- Header: "HomeScope" branding + "Your Properties" subtitle
+- Header: "HouseScope" branding + "Your Properties" subtitle

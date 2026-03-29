@@ -1,10 +1,10 @@
-# HomeScope Merge + Gemini Migration Plan
+# HouseScope Merge + Gemini Migration Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Merge cursor branch's polished UI/design into Claude branch's working backend, switch LLM to Gemini, and add demo mode with mock data.
 
-**Architecture:** Keep feat/homescope's single-page architecture and full backend. Port cursor's warm cream color palette, animations (scanner rings, spring transitions), corner-accent Canvas rendering, and NegotiationModal. Add a demo mode that uses mock data when no API key is configured. Switch AI provider from Anthropic to Google Gemini via AI Gateway.
+**Architecture:** Keep feat/housescope's single-page architecture and full backend. Port cursor's warm cream color palette, animations (scanner rings, spring transitions), corner-accent Canvas rendering, and NegotiationModal. Add a demo mode that uses mock data when no API key is configured. Switch AI provider from Anthropic to Google Gemini via AI Gateway.
 
 **Tech Stack:** Same as before + lucide-react (icons), cursor's color palette, Google Gemini via AI Gateway
 
@@ -99,7 +99,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "HomeScope — AI Home Inspection",
+  title: "HouseScope — AI Home Inspection",
   description: "Upload a walkthrough video. Get an annotated inspection report in 45 seconds.",
 };
 

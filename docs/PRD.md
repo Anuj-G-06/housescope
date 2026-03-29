@@ -1,4 +1,4 @@
-# HomeScope
+# HouseScope
 ## AI-Annotated Home Inspection Video Analysis
 ### Product Requirements Document | VentureHacks 2026 | v3.0
 
@@ -15,7 +15,7 @@
 
 ## 1. Vision & Elevator Pitch
 
-**One-liner:** Record a 60-second walkthrough on your phone. Upload it. HomeScope returns an annotated version of your video — with bounding boxes, labels, and repair costs drawn directly onto every problem it finds — plus a full inspection report and negotiation brief.
+**One-liner:** Record a 60-second walkthrough on your phone. Upload it. HouseScope returns an annotated version of your video — with bounding boxes, labels, and repair costs drawn directly onto every problem it finds — plus a full inspection report and negotiation brief.
 
 ### The Problem
 
@@ -25,7 +25,7 @@ Even buyers who get inspections face a timing gap: inspections happen after an o
 
 ### The Solution
 
-HomeScope processes uploaded walkthrough videos through an AI vision pipeline that extracts frames, detects defects, and renders annotated overlays directly onto the video. The output is a new, playback-ready video where every problem is visually marked — bounding boxes, floating labels, severity colors — exactly as it appeared in the original footage. Alongside the annotated video, HomeScope generates a tiered inspection report with repair cost estimates, code references, and a ready-to-use negotiation brief.
+HouseScope processes uploaded walkthrough videos through an AI vision pipeline that extracts frames, detects defects, and renders annotated overlays directly onto the video. The output is a new, playback-ready video where every problem is visually marked — bounding boxes, floating labels, severity colors — exactly as it appeared in the original footage. Alongside the annotated video, HouseScope generates a tiered inspection report with repair cost estimates, code references, and a ready-to-use negotiation brief.
 
 ### Why Annotated Video (Not Just a Report)
 
@@ -40,7 +40,7 @@ A text report tells you what was found. An annotated video shows you exactly whe
 
 ## 2. Target Users
 
-| User | Pain Point | How HomeScope Helps |
+| User | Pain Point | How HouseScope Helps |
 |------|-----------|-------------------|
 | **Home Buyer** | Forced to waive inspections; no visibility into issues during tour phase | Upload the walkthrough they already recorded — get back an annotated video and full report within minutes |
 | **Buyer's Agent** | Liability risk advising clients to waive; no tour-phase due diligence tool | Shareable annotated video + professional report demonstrating due diligence without slowing deal velocity |
@@ -105,7 +105,7 @@ This is the core technical centerpiece. Exact implementation:
 ### 3.4 The Wow Moment for Demo
 
 1. **Open:** "I toured a house in Pittsburgh last week and recorded this walkthrough on my phone." [Upload 60-second video, tap Analyze]
-2. **Processing:** "HomeScope is analyzing every frame." [Progress fills, finding cards stream in: 'Water damage flagged... Electrical violation flagged... Foundation concern flagged...']
+2. **Processing:** "HouseScope is analyzing every frame." [Progress fills, finding cards stream in: 'Water damage flagged... Electrical violation flagged... Foundation concern flagged...']
 3. **Annotated video loads:** Press play. Camera pans across the basement ceiling — a red bounding box materializes over the water stain: **"Active moisture damage — $4K–$9K"**
 4. **Pan continues:** Yellow box over an outlet near the sink: **"GFCI violation — NEC 210.8 — $150"**. Orange box on the electrical panel: **"Double-tapped breakers — $800–$2.5K"**
 5. **Report:** "4 findings. Total estimated repairs: $11,200–$24,800. Request $15,000–$22,000 before signing."
@@ -153,7 +153,7 @@ The moment the annotated video plays back with boxes materializing over actual w
 
 ### 4.3 LLM Prompt Strategy (Core IP)
 
-The system prompt is the domain layer that separates HomeScope from a raw API call:
+The system prompt is the domain layer that separates HouseScope from a raw API call:
 
 1. **Role:** "You are a licensed home inspector analyzing video frames for defects across 8 categories"
 2. **Taxonomy:** 8 issue categories (Water Damage, Structural, Electrical, HVAC, Roof/Ceiling, Foundation, Plumbing, Safety) with sub-types, severity definitions, and NEC/IRC code references
@@ -205,13 +205,13 @@ The system prompt is the domain layer that separates HomeScope from a raw API ca
 
 ## 6. Demo Script (2 Minutes)
 
-1. **Open (15s):** "25% of homebuyers last year made offers with zero knowledge of what was wrong with the house. The market forced them to skip inspections. We built HomeScope to change that — starting with the video you already recorded on your phone."
+1. **Open (15s):** "25% of homebuyers last year made offers with zero knowledge of what was wrong with the house. The market forced them to skip inspections. We built HouseScope to change that — starting with the video you already recorded on your phone."
 
 2. **Upload (15s):** "Here's a 60-second walkthrough I recorded at a house in Pittsburgh last week." [Drag video into upload area, tap Analyze]
 
-3. **Processing (20s):** "HomeScope is now analyzing every frame — extracting defects, mapping their locations, estimating repair costs." [Progress bar fills, finding cards stream in live]
+3. **Processing (20s):** "HouseScope is now analyzing every frame — extracting defects, mapping their locations, estimating repair costs." [Progress bar fills, finding cards stream in live]
 
-4. **Annotated video (40s):** "Here's what makes HomeScope different." [Press play — red box appears over water stain: 'Active moisture damage — $4K–$9K'. Yellow box over outlet: 'GFCI violation — NEC 210.8 — $150'. Orange box on panel: 'Double-tapped breakers — $800–$2.5K'.] "The defects are drawn directly onto your footage, at the exact moment you were looking at them."
+4. **Annotated video (40s):** "Here's what makes HouseScope different." [Press play — red box appears over water stain: 'Active moisture damage — $4K–$9K'. Yellow box over outlet: 'GFCI violation — NEC 210.8 — $150'. Orange box on panel: 'Double-tapped breakers — $800–$2.5K'.] "The defects are drawn directly onto your footage, at the exact moment you were looking at them."
 
 5. **Report (15s):** "4 findings. Total estimated repairs: $11,200–$24,800. Request $15,000–$22,000 before signing."
 
@@ -239,7 +239,7 @@ The system prompt is the domain layer that separates HomeScope from a raw API ca
 
 ### Why This Isn't Just ChatGPT
 
-| Layer | What HomeScope Adds Over a Raw LLM |
+| Layer | What HouseScope Adds Over a Raw LLM |
 |-------|-----------------------------------|
 | **Inspection taxonomy** | Domain-specific defect classification on ASHI standards and NEC/IRC codes |
 | **Bounding box schema** | Structured output that enables video annotation — no raw model produces this |
@@ -250,9 +250,9 @@ The system prompt is the domain layer that separates HomeScope from a raw API ca
 
 ### Competitive Landscape
 
-| Competitor | Gap HomeScope Fills |
+| Competitor | Gap HouseScope Fills |
 |-----------|-------------------|
-| Professional inspectors ($400–$500, post-offer, 3–4 hours) | HomeScope works during tour phase, costs $10–$20, takes 45 seconds |
+| Professional inspectors ($400–$500, post-offer, 3–4 hours) | HouseScope works during tour phase, costs $10–$20, takes 45 seconds |
 | iRoofing / Hover (exterior photo analysis) | Interior-first, video-native, annotated playback vs. static photo |
 | ChatGPT / Claude with photo upload | No video, no bounding boxes, no annotated playback, no structured report, no negotiation output |
 | **No direct competitor** | First product doing AI-annotated video analysis for home buyers |
@@ -268,11 +268,11 @@ The system prompt is the domain layer that separates HomeScope from a raw API ca
 
 | Question | Answer |
 |----------|--------|
-| **"Is this just ChatGPT with a video?"** | Any LLM can say 'that might be water damage.' HomeScope adds a spatial bounding box schema enabling video annotation, a regional cost database, an ASHI/NEC inspection taxonomy, finding deduplication across frames, and a negotiation output. The model is a commodity. Every layer on top is the product. |
-| **"How accurate is it?"** | HomeScope is a triage tool, not a licensed inspection replacement — same as WebMD vs. a doctor. Conservative by design: only flag above 75% confidence. For the demo, we pre-validated output on our test video. Post-launch, accuracy improves through the data flywheel. |
-| **"What about liability?"** | Every report includes a disclaimer: AI-assisted triage, not a licensed inspection. Same legal framing as any property information tool. The risk of *not* having HomeScope — buying a house with a $40K issue you walked past — is far greater. |
-| **"What stops Zillow from copying this?"** | Nothing immediately — but HomeScope's labeled defect dataset by region becomes a moat over time. We also move faster. Zillow takes 18 months to ship a feature; we shipped this in 4 hours. |
-| **"Why pay when you can use ChatGPT?"** | ChatGPT doesn't support video. It doesn't return bounding boxes. It doesn't produce an annotated video you can play back. It doesn't give you a negotiation letter. HomeScope is a workflow, not a chat prompt. |
+| **"Is this just ChatGPT with a video?"** | Any LLM can say 'that might be water damage.' HouseScope adds a spatial bounding box schema enabling video annotation, a regional cost database, an ASHI/NEC inspection taxonomy, finding deduplication across frames, and a negotiation output. The model is a commodity. Every layer on top is the product. |
+| **"How accurate is it?"** | HouseScope is a triage tool, not a licensed inspection replacement — same as WebMD vs. a doctor. Conservative by design: only flag above 75% confidence. For the demo, we pre-validated output on our test video. Post-launch, accuracy improves through the data flywheel. |
+| **"What about liability?"** | Every report includes a disclaimer: AI-assisted triage, not a licensed inspection. Same legal framing as any property information tool. The risk of *not* having HouseScope — buying a house with a $40K issue you walked past — is far greater. |
+| **"What stops Zillow from copying this?"** | Nothing immediately — but HouseScope's labeled defect dataset by region becomes a moat over time. We also move faster. Zillow takes 18 months to ship a feature; we shipped this in 4 hours. |
+| **"Why pay when you can use ChatGPT?"** | ChatGPT doesn't support video. It doesn't return bounding boxes. It doesn't produce an annotated video you can play back. It doesn't give you a negotiation letter. HouseScope is a workflow, not a chat prompt. |
 
 ---
 

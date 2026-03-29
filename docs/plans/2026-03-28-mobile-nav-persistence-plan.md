@@ -35,7 +35,7 @@ Create `lib/storage.ts`:
 ```typescript
 import type { SavedAnalysis } from "./types";
 
-const STORAGE_KEY = "homescope:analyses";
+const STORAGE_KEY = "housescope:analyses";
 const MAX_ANALYSES = 20;
 
 export function getSavedAnalyses(): SavedAnalysis[] {
@@ -285,7 +285,7 @@ export function HomeView({ analyses, onSelectAnalysis, onDeleteAnalysis, onStart
           <span className="text-white text-sm font-bold">H</span>
         </div>
         <div>
-          <h1 className="text-xl font-bold text-[var(--color-text-primary)]">HomeScope</h1>
+          <h1 className="text-xl font-bold text-[var(--color-text-primary)]">HouseScope</h1>
           <p className="text-xs text-[var(--color-text-muted)]">Your Properties</p>
         </div>
       </div>
